@@ -101,18 +101,18 @@ ppc_rates <- read_csv("All_Payer_Inpatient_Major_Potentially_Preventable_Complic
 View(ppc_rates)
 ```
 
-Merging SPARCS data set to NASHP and Manual matched.
+Merging SPARCS data set to NASHP and Manual matched. Use right join to maintain the additional years of observations not present in ppc_rates data.
+
+\[right_join
+
+by argument c("facility","year")\]
 
 ```{r}
 ppc_rates_janitor <- ppc_rates %>% clean_names() %>% rename( year = discharge_year)
 
-SPARCS_combined <- full_join(x = ppc_rates_janitor,
+SPARCS_combined <- right_join(x = ppc_rates_janitor,
                              y = Combined,
-                             by = "facility_id",
+                             by = c("facility_id", "year"),
                              copy = FALSE,
                              keep = NULL)
 ```
-
-left_join
-
-by argument c("facility","year")
