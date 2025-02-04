@@ -1,0 +1,154 @@
+---
+title: "Thesis Data Cleaning"
+format: html
+editor: visual
+author: Mitchell Zupko
+---
+
+## Thesis Data Cleaning
+
+## Cleaning Code
+
+Load in necessary libraries for manipulating and visualizing data:
+
+```{r}
+library(readr)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(janitor)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+```
+
+Load in dataset one from AHRQ compendium of U.S. Health systems, 2021:
+
+```{r}
+AHRQdata <- read_csv("chsp-hospital-linkage-2021-rev.csv")
+View(AHRQdata)
+```
+
+Group by and filter are both dplyr commands.
+
+```{r}
+NY_ahrq_data <- AHRQdata %>% 
+  group_by(hospital_state) %>%
+  filter(hospital_state == "NY") %>% ungroup()
+```
+
+Adding second tibble/data frame from NY SPARCS data on potentially preventable complications.
+
+```{r}
+ppc_rates <- read_csv("All_Payer_Inpatient_Major_Potentially_Preventable_Complication__PPC__Rates_by_Hospital__SPARCS___Beginning_2013_20241001.csv")
+View(ppc_rates)
+```
+
+Clean names is part of janitor package.
+
+```{r}
+ppc_rates_clean <- ppc_rates %>% clean_names()
+
+```
+
+Mutating joins also dplyr command.
+
+```{r}
+NYwithPPC2 <- left_join(ppc_rates_clean,
+                        NY_ahrq_data,
+                        by = join_by(hospital_name),
+                        keep = NULL,
+                        multiple = "first")
+```
+
+Count of hospital ownership values. Roughly 500 with close to 1100 NAs. Figure out why...
+
+```{r}
+NYwithPPC2 %>% group_by(hos_ownership) %>% count() 
+
+```
+
+Scatter plot uses ggplot
+
+```{r}
+ggplot(NYwithPPC2, aes(x=hos_ownership, y=difference_in_discharges)) + geom_point()
+
+```
+
+Density graph uses ggplot and hrbrthemes customization.
+
+```{r}
+NYwithPPC2 %>% ggplot(aes(x=hos_ownership)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8)
+```
+
+Hospital Ownership Count original AHRQ.
+
+```{r}
+NY_ahrq_data %>% group_by(hos_ownership) %>% count()
+
+```
+
+Correlation matrix using ggally package.
+
+```{r}
+NYwithPPC2 %>% ggcorr(method = c("pairwise", "pearson"),
+                        geom = "tile")
+```
+
+Correlation in cleaned data using pearson, spearman, and kendall correlation.
+
+```{r}
+cor(NYwithPPC2$hos_ownership, NYwithPPC2$difference_in_discharges, 
+    use = 'complete.obs')
+
+cor(NYwithPPC2$hos_ownership, NYwithPPC2$difference_in_discharges,
+    method='spearman' ,use = 'complete.obs')
+
+cor(NYwithPPC2$hos_ownership, NYwithPPC2$difference_in_discharges,
+    method='kendall' ,use = 'complete.obs')
+```
+
+Pearson =
+
+```         
+-0.05171849
+```
+
+Spearman =
+
+```         
+ -0.03505024
+```
+
+Kendall =
+
+```         
+-0.02796712
+```
+
+Pivot wider requires the tidyr package. Look at ppc rates clean correlation by year.
+
+```{r}
+wide_ppc_clean <- ppc_rates_clean %>% pivot_wider(names_from = discharge_year,
+                                names_sep = ".", 
+                                values_from = difference_in_discharges)
+
+wide_ppc_clean %>% ggcorr(method = c("pairwise", "pearson"),
+                        geom = "tile")
+
+cor(wide_ppc_clean[, c('2013','2014','2015','2016','2017','2018',
+                       '2019','2020','2021')])
+```
+
+Lets try privot wider in ppc rates clean by hospital.
+
+```{r}
+wide_ppc_clean2 <- ppc_rates_clean %>% pivot_wider(names_from = hospital_name,
+                                                  names_sep = ".", 
+                                                  values_from = c(difference_in_discharges))  
+
+view(wide_ppc_clean2)
+```
+
+Too many created variables to examine although there appears to be variation within hospital by year but possibly not variation across all hospitals in the state combined by year.

@@ -1,0 +1,184 @@
+---
+title: "Post Manual Match"
+author: "Mitchell Zupko"
+format: html
+editor: visual
+warning: false
+embed-resources: true
+---
+
+## Code
+
+Load necessary libraries:
+
+```{r}
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(janitor)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(tabulator)
+```
+
+Load in manually cleaned data set:
+
+```{r}
+library(readxl)
+Manual_matched <- read_excel("Data_manual_cleaning.xlsx", 
+    sheet = "Deleted non matched", skip = 2)
+View(Manual_matched)
+```
+
+Add second tibble which is the original AHRQ data:
+
+```{r}
+library(readr)
+AHRQdata <- read_csv("chsp-hospital-linkage-2021-rev.csv")
+View(AHRQdata)
+```
+
+Group by and filter AHRQ data using dplyr library. Filter AHRQ data to just NY hospitals.
+
+```{r}
+NY_ahrq_data <- AHRQdata %>% group_by(hospital_state) %>%
+  filter(hospital_state == "NY") %>% ungroup()
+```
+
+Add third tibble which is original SPARCS data:
+
+```{r}
+library(readr)
+ppc_rates <- read_csv("All_Payer_Inpatient_Major_Potentially_Preventable_Complication__PPC__Rates_by_Hospital__SPARCS___Beginning_2013_20241001.csv")
+View(ppc_rates)
+
+```
+
+Clean names as part of janitor package.
+
+```{r}
+ppc_rates_clean <- ppc_rates %>% clean_names()
+```
+
+Joining data sets together. Mutating joins also use dplyr library.
+
+```{r}
+first_match <- left_join(Manual_matched,
+                         NY_ahrq_data,
+                         by = join_by(compendium_hospital_id),
+                         keep = NULL)
+
+first_match_clean <- first_match %>% clean_names()
+
+ppc_rates_column <- ppc_rates_clean %>% rename_at('hospital_name', ~'hospital_name_sparcs')
+```
+
+```{r}
+second_match <- left_join(first_match_clean,
+                        ppc_rates_column,
+                        by = join_by(hospital_name_sparcs),
+                        keep = NULL)
+```
+
+Mean and Median for the difference in discharges variable.
+
+```{r}
+mean(second_match$difference_in_discharges)
+median(second_match$difference_in_discharges)
+```
+
+Count of hospital ownership values.
+
+```{r}
+second_match %>% group_by(hos_ownership) %>% count() 
+```
+
+Histogram of hospital ownership using ggplot (looks more like a bar graph here though).
+
+```{r}
+
+second_match %>%
+  ggplot(aes(x=hos_ownership)) +
+  geom_histogram( binwidth = .5,fill="#69b3a2", color="#e9ecef", alpha=0.9) +
+  theme_minimal() +
+  xlab("Hospital Ownership Type") +
+  ylab("Number of Hospitals") +
+  labs(
+    title = "Hospital Ownership Type in New York State from 2013-2021"  
+  )
+```
+
+Determining number of hospitals in SPARCS.
+
+```{r}
+Sparcs_count <- ppc_rates_clean %>% group_by(hospital_name) %>% count()
+```
+
+Scatter plot looking at hospital ownership and difference in discharges using ggplot with a loess line.
+
+```{r}
+ggplot(second_match, aes(x=hos_ownership, y=difference_in_discharges)) + geom_point() +
+  geom_smooth(method = "loess", se =FALSE) +
+  theme_minimal() +
+  xlab("Hospital Ownership") +
+  ylab("Difference in Discharges") +
+  ggtitle("Variation in Potentially Preventable Complications Greatest in Non-Profits")
+```
+
+Correlations using Pearson's method:
+
+```{r}
+cor(second_match$hos_ownership, second_match$difference_in_discharges, 
+    use = 'complete.obs')
+
+cor(second_match$hos_net_revenue, second_match$difference_in_discharges, 
+    use = 'complete.obs')
+
+cor(second_match$hos_majteach, second_match$difference_in_discharges, 
+    use = 'complete.obs')
+
+cor(second_match$hos_beds, second_match$difference_in_discharges, 
+    use = 'complete.obs')
+
+cor(second_match$hos_dsch, second_match$difference_in_discharges, 
+    use = 'complete.obs')
+
+cor(second_match$hos_res, second_match$difference_in_discharges, 
+    use = 'complete.obs')
+
+cor(second_match$hos_highuc, second_match$difference_in_discharges, 
+    use = 'complete.obs')
+```
+
+Tabulator library for quantiles and tabcounts.
+
+```{r}
+tab_match <- second_match %>% tab(hos_ownership, difference_in_discharges)
+
+second_match %>% tabcount(hos_ownership, difference_in_discharges)
+
+second_match %>% quantiles(difference_in_discharges) 
+```
+
+Drop unused columns from data set.
+
+```{r}
+remove_cols <- c('compendium_hospital_id', 'ccn_x', 'hospital_name_ahrq', 
+                 'hospital_city_x', 'hospital_name_sparcs', 'facility_id.x',
+                 'mitchell_id', 'ccn_y', 'hospital_street', 'hospital_city_y',
+                 'hospital_state', 'hospital_zip', 'acutehosp_flag', 'health_sys_id',
+                 'health_sys_name', 'health_sys_city', 'health_sys_state',
+                 'hos_children', 'hos_vmajteach', 'hos_teachint', 'hos_highdpp',
+                 'facility_id.y','ppc_version')
+
+second_match_minvariables <- subset(second_match,
+                                    select = !(names(second_match) %in% remove_cols))
+```
+
+Correlation graphic using the ggally package.
+
+```{r}
+second_match_minvariables %>% ggcorr(method = c("pairwise", "pearson"),
+                        geom = "tile")
+```

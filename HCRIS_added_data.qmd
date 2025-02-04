@@ -1,0 +1,118 @@
+---
+title: "Add HCRIS data"
+format: html
+editor: visual
+embed-resources: true
+---
+
+## Setup
+
+Load necessary libraries:
+
+```{r}
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(janitor)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(tabulator)
+```
+
+Load in manually cleaned data set:
+
+```{r}
+library(readxl)
+Manual_matched <- read_excel("Data_manual_cleaning.xlsx", 
+    sheet = "Deleted non matched", skip = 2)
+View(Manual_matched)
+```
+
+Load in NASHP ownership data:
+
+```{r}
+library(readxl)
+NASHP <- read_excel("NASHP HCT Data 2024 July.xlsx", 
+    sheet = "Downloadable")
+View(NASHP)
+```
+
+Filter NASHP data to focus on New York.
+
+```{r}
+
+cleaned_NASHP <- NASHP %>% filter(State == "NY") 
+```
+
+R sometimes throws errors due to the complexity of the NASHP data set. In order to prevent future loading and crashing problems we write the filtered data set so I have a backup for potential use in future. Name new csv file cleanNASHP in the data folder under Thesis GU.
+
+```{r}
+write.csv(cleaned_NASHP, "C:/Users/Mitchell/Documents/Thesis GU/Data/cleanNASHP.csv")
+print(cleaned_NASHP)
+```
+
+Exploring cleaned NASHP data.
+
+```{r}
+View(cleaned_NASHP %>% count(`Hospital Ownership Type`))
+
+for_viz <-(cleaned_NASHP %>% group_by(Year) %>% count(`Hospital Ownership Type`))
+```
+
+Visualize hospital ownership count by year.
+
+```{r}
+for_viz %>% ggplot(mapping = aes(x = `Hospital Ownership Type`, fill = Year, y = n)) + geom_bar(position = "dodge", stat = "identity") 
+
+```
+
+Trying to do a percent bar chart. Not successful yet.
+
+```{r}
+for_viz %>% ggplot(mapping = aes(x = `Hospital Ownership Type`, fill = Year, y = n)) + geom_bar(position = "fill", stat = "identity") +   scale_color_gradient2(low = "blue", high = "orange") 
+```
+
+\*Grouped line chart.
+
+```{r}
+for_viz %>% ggplot(mapping = aes(x = Year, group = `Hospital Ownership Type`, y = n, color = `Hospital Ownership Type`)) +
+  geom_line() + scale_y_continuous(breaks = seq(0, 175, by = 25)) + theme_minimal()
+```
+
+Merge manually cleaned set to cleaned NASHP data set by CCN.
+
+```{r}
+ccn_cleaned_NASHP <- cleaned_NASHP %>% rename( ccn = `CCN#`) %>% transform(ccn= as.numeric(ccn))
+
+Combined <- full_join(x = Manual_matched,
+          y = ccn_cleaned_NASHP,
+          by = "ccn",
+          copy = FALSE,
+          keep = NULL) %>% clean_names()
+```
+
+Load SPARCS data set
+
+```{r}
+
+library(readr)
+ppc_rates <- read_csv("All_Payer_Inpatient_Major_Potentially_Preventable_Complication__PPC__Rates_by_Hospital__SPARCS___Beginning_2013_20241001.csv")
+View(ppc_rates)
+```
+
+Merging SPARCS data set to NASHP and Manual matched.
+
+```{r}
+ppc_rates_janitor <- ppc_rates %>% clean_names() %>% rename( year = discharge_year)
+
+SPARCS_combined <- full_join(x = ppc_rates_janitor,
+                             y = Combined,
+                             by = "facility_id",
+                             copy = FALSE,
+                             keep = NULL)
+```
+
+left_join
+
+by argument c("facility","year")
