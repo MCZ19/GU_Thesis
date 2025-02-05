@@ -18,12 +18,14 @@ library(ggplot2)
 library(hrbrthemes)
 library(GGally)
 library(tabulator)
+library(readxl)
+library(broom)
+library(plm)
 ```
 
 Load in manually cleaned data set:
 
 ```{r}
-library(readxl)
 Manual_matched <- read_excel("Data_manual_cleaning.xlsx", 
     sheet = "Deleted non matched", skip = 2)
 View(Manual_matched)
@@ -32,7 +34,6 @@ View(Manual_matched)
 Load in NASHP ownership data:
 
 ```{r}
-library(readxl)
 NASHP <- read_excel("NASHP HCT Data 2024 July.xlsx", 
     sheet = "Downloadable")
 View(NASHP)
@@ -45,7 +46,7 @@ Filter NASHP data to focus on New York.
 cleaned_NASHP <- NASHP %>% filter(State == "NY") 
 ```
 
-R sometimes throws errors due to the complexity of the NASHP data set. In order to prevent future loading and crashing problems we write the filtered data set so I have a backup for potential use in future. Name new csv file cleanNASHP in the data folder under Thesis GU.
+R sometimes throws errors due to the complexity of the NASHP data set. In order to prevent future loading and crashing problems I write the filtered data set so I have a backup for potential use in future. Name new csv file cleanNASHP in the data folder under Thesis GU.
 
 ```{r}
 write.csv(cleaned_NASHP, "C:/Users/Mitchell/Documents/Thesis GU/Data/cleanNASHP.csv")
@@ -115,4 +116,103 @@ SPARCS_combined <- right_join(x = ppc_rates_janitor,
                              by = c("facility_id", "year"),
                              copy = FALSE,
                              keep = NULL)
+```
+
+Add in AHRQ cross sectional data sets. Note documentation shows that coding is not standardized between years. For instance a 2 in hospital ownership in 2022 is a public or governmental hospital while in 2020 a 2 means church-operated. Only 2021 includes 4 equals federal.
+
+```{r}
+AHRQ2022 <- read_excel("AHRQ datasets/chsp-hospital-linkage-2022-rev.xlsx")
+View(AHRQ2022)
+
+Cleaned2022 <- AHRQ2022 %>% filter(hospital_state == "NY")
+
+graphed2022 <- Cleaned2022 %>% count(is.na(hos_ownership)) %>% mutate(logic = `is.na(hos_ownership)`)
+
+ggplot(graphed2022, aes(x=logic, y=n)) + geom_bar(stat = "identity", position = "dodge")
+
+Cleanedmore2022 <- Cleaned2022 %>% mutate(year = case_when(
+  hospital_state == "NY" ~ 2022
+)) %>% mutate(hos_ownership = case_when(
+  hos_ownership == 1 ~ "Non-Profit",
+  hos_ownership == 2 ~ "Governmental",
+  hos_ownership == 3 ~ "Church-Operated",
+  hos_ownership == 5 ~ "For-Profit"
+  ))
+
+
+#^recode var hos_ownership so the number are characters. 
+
+AHRQ2021 <- read_excel("AHRQ datasets/chsp-hospital-linkage-2021-rev.xlsx")
+View(AHRQ2021)
+
+Cleaned2021 <- AHRQ2021 %>% filter(hospital_state == "NY") %>% mutate(year = case_when(
+  hospital_state == "NY" ~ 2021
+)) %>% mutate(hos_ownership = case_when(
+  hos_ownership == 1 ~ "Non-Profit",
+  hos_ownership == 2 ~ "Church-Operated",
+  hos_ownership == 3 ~ "Governmental",
+  hos_ownership == 4 ~ "Federal",
+  hos_ownership == 5 ~ "For-Profit"
+  ))
+
+#^recode var hos_ownership so the number are characters. 
+
+AHRQ2020 <- read_excel("AHRQ datasets/chsp-hospital-linkage-2020-rev.xlsx")
+View(AHRQ2020)
+
+Cleaned2020 <- AHRQ2020 %>% filter(hospital_state == "NY") %>% mutate(year = case_when(
+  hospital_state == "NY" ~ 2020
+)) %>% mutate(hos_ownership = case_when(
+  hos_ownership == 1 ~ "Non-Profit",
+  hos_ownership == 2 ~ "Church-Operated",
+  hos_ownership == 3 ~ "Governmental",
+  hos_ownership == 5 ~ "For-Profit"
+  ))
+```
+
+Naive linear regression.
+
+```{r}
+
+initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type,data = SPARCS_combined)
+
+summary(initial_reg)
+
+glance(initial_reg)
+```
+
+Simple fixed effects regression.
+
+```{r}
+
+fixed_effects <- plm(difference_in_discharges ~ hospital_ownership_type,
+                     data = SPARCS_combined,
+                     index = c("year","hospital_name.y"),
+                     model = "within",
+                     effect = "twoways")
+
+summary(fixed_effects)
+glance(fixed_effects)
+```
+
+Add control variables to fixed effects regression.
+
+```{r}
+Controls_added <- plm(difference_in_discharges ~ hospital_ownership_type + bed_size+ net_patient_revenue + net_charity_care_cost,
+                     data = SPARCS_combined,
+                     index = c("year","hospital_name.y"),
+                     model = "within",
+                     effect = "twoways")
+
+summary(Controls_added)
+glance(Controls_added)
+```
+
+Linear regression with controls.
+
+```{r}
+linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue + net_charity_care_cost + year + hospital_name.y,data = SPARCS_combined)
+
+summary(linear_control)
+glance(linear_control)
 ```
