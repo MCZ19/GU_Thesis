@@ -21,6 +21,7 @@ library(tabulator)
 library(readxl)
 library(broom)
 library(plm)
+library(openxlsx)
 ```
 
 Load in manually cleaned data set:
@@ -137,7 +138,7 @@ Cleanedmore2022 <- Cleaned2022 %>% mutate(year = case_when(
   hos_ownership == 2 ~ "Governmental",
   hos_ownership == 3 ~ "Church-Operated",
   hos_ownership == 5 ~ "For-Profit"
-  ))
+  )) %>% transform(ccn = as.double(ccn))
 
 
 #^recode var hos_ownership so the number are characters. 
@@ -153,7 +154,7 @@ Cleaned2021 <- AHRQ2021 %>% filter(hospital_state == "NY") %>% mutate(year = cas
   hos_ownership == 3 ~ "Governmental",
   hos_ownership == 4 ~ "Federal",
   hos_ownership == 5 ~ "For-Profit"
-  ))
+  )) %>% transform(ccn = as.double(ccn))
 
 #^recode var hos_ownership so the number are characters. 
 
@@ -167,7 +168,38 @@ Cleaned2020 <- AHRQ2020 %>% filter(hospital_state == "NY") %>% mutate(year = cas
   hos_ownership == 2 ~ "Church-Operated",
   hos_ownership == 3 ~ "Governmental",
   hos_ownership == 5 ~ "For-Profit"
-  ))
+  )) %>% transform(ccn = as.double(ccn))
+```
+
+Combine AHRQ cross-sectional data with already combined data sets (NASHP/SPARCS/Manually Cleaned).
+
+```{r}
+Fully_combined <- left_join(
+  x = SPARCS_combined,
+  y = Cleanedmore2022,
+  by = c("ccn", "year"),
+  copy = FALSE,
+  keep = NULL) 
+
+Fully_combined <- left_join(
+  x = Fully_combined,
+  y = Cleaned2021,
+  by = c("ccn", "year"),
+  copy = FALSE,
+  keep = NULL)
+
+Fully_combined <- left_join(
+  x = Fully_combined,
+  y = Cleaned2020,
+  by = c("ccn", "year"),
+  copy = FALSE,
+  keep = NULL)
+```
+
+Write fully combined data set to excel as a backup and for my advisor.
+
+```{r}
+
 ```
 
 Naive linear regression.
