@@ -199,7 +199,7 @@ Fully_combined <- left_join(
 Write fully combined data set to excel as a backup and for my advisor.
 
 ```{r}
-
+write.xlsx(Fully_combined, 'Fully_combined_dataset.xlsx')
 ```
 
 Naive linear regression.

@@ -1,0 +1,136 @@
+---
+title: "Unofficial_Regression_Outputs"
+format: docx
+docx:
+  toc: TRUE
+editor: visual
+warning: FALSE
+embed-resources: true
+---
+
+## Setup
+
+Load necessary libraries:
+
+```{r}
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(janitor)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(tabulator)
+library(readxl)
+library(broom)
+library(plm)
+library(openxlsx)
+library(sandwich)
+library(lmtest)
+```
+
+## Load Cleaned Data
+
+```{r}
+
+library(readxl)
+Fully_combined_dataset <- read_excel("Fully_combined_dataset.xlsx")
+View(Fully_combined_dataset)
+```
+
+## Naive linear regression.
+
+```{r}
+
+initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type,data = Fully_combined_dataset)
+
+summary(initial_reg)
+
+glance(initial_reg)
+
+coeftest(initial_reg, vcov = vcovHC, type = "HC1")[1, ]
+```
+
+## Linear regression with controls.
+
+```{r}
+
+linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue + net_charity_care_cost,data = Fully_combined_dataset)  
+
+summary(linear_control) 
+
+glance(linear_control)
+
+coeftest(linear_control, vcov = vcovHC, type = "HC1")[1, ]
+```
+
+## Hospital Fixed Effects
+
+```{r}
+
+hospital_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue + net_charity_care_cost - 1,data = Fully_combined_dataset)  
+
+summary(hospital_fixed_effects) 
+
+glance(hospital_fixed_effects)
+
+coeftest(hospital_fixed_effects, vcov = vcovHC, type = "HC1")[1, ]
+```
+
+## Time Fixed Effects
+
+```{r}
+time_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue + net_charity_care_cost - 1,data = Fully_combined_dataset)  
+
+summary(time_fixed_effects) 
+
+glance(time_fixed_effects)
+
+coeftest(time_fixed_effects, vcov = vcovHC, type = "HC1")[1, ]
+```
+
+## Simple two-way fixed effects regression.
+
+```{r}
+
+fixed_effects <- plm(difference_in_discharges ~ hospital_ownership_type,
+                     data = Fully_combined_dataset,
+                     index = c("year","hospital_name.y"),
+                     model = "within",
+                     effect = "twoways")
+
+summary(fixed_effects)
+glance(fixed_effects)
+
+coeftest(fixed_effects, vcov = vcovHC, type = "HC1")[1, ]
+```
+
+## Add control variables to fixed effects regression.
+
+```{r}
+Controls_added <- plm(difference_in_discharges ~ hospital_ownership_type + bed_size+ net_patient_revenue + net_charity_care_cost,
+                     data = Fully_combined_dataset,
+                     index = c("year","hospital_name.y"),
+                     model = "within",
+                     effect = "twoways")
+
+summary(Controls_added)
+glance(Controls_added)
+
+coeftest(Controls_added, vcov = vcovHC, type = "HC1")[1, ]
+```
+
+## Just looking at a scatterplot
+
+```{r}
+ggplot(data = Fully_combined_dataset,
+       mapping = aes(x = hospital_ownership_type, y = difference_in_discharges, fill = year)) + geom_point(alpha = .3) + theme_minimal()
+
+```
+
+## Density plot
+
+```{r}
+ggplot(data = Fully_combined_dataset,
+       mapping = aes(x = difference_in_discharges, group = hospital_ownership_type, fill = hospital_ownership_type)) + geom_density(alpha =0.6) + theme_minimal()
+```
