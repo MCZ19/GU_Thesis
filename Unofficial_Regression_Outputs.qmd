@@ -48,7 +48,7 @@ summary(initial_reg)
 
 glance(initial_reg)
 
-coeftest(initial_reg, vcov = vcovHC, type = "HC1")[1, ]
+coeftest(initial_reg, vcov = vcovHC, type = "HC1")
 ```
 
 ## Linear regression with controls.
@@ -61,7 +61,7 @@ summary(linear_control)
 
 glance(linear_control)
 
-coeftest(linear_control, vcov = vcovHC, type = "HC1")[1, ]
+coeftest(linear_control, vcov = vcovHC, type = "HC1")
 ```
 
 ## Hospital Fixed Effects
