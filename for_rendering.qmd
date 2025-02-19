@@ -37,7 +37,11 @@ View(Fully_combined_dataset)
 class("net_patient_revenue")
 class("net_charity_care_cost")
 
-numeric_data <- Fully_combined_dataset %>% transform(net_patient_revenue = as.numeric(net_patient_revenue)) %>% transform(net_charity_care_cost = as.numeric(net_charity_care_cost))
+numeric_data <- Fully_combined_dataset %>%
+  transform(net_patient_revenue = as.numeric(net_patient_revenue)) %>%
+  transform(net_charity_care_cost = as.numeric(net_charity_care_cost)) %>%
+  mutate(net_patient_revenue_hundred_thousand = net_patient_revenue/100000) %>% mutate(net_charity_care_cost_ten_thousand = net_charity_care_cost/10000)
+  
 ```
 
 ## Naive linear regression.
@@ -57,7 +61,7 @@ coeftest(initial_reg, vcov = vcovHC, type = "HC1")
 
 ```{r}
 
-linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue + net_charity_care_cost,data = numeric_data)  
+linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand ,data = numeric_data)  
 
 summary(linear_control) 
 
@@ -70,7 +74,7 @@ coeftest(linear_control, vcov = vcovHC, type = "HC1")
 
 ```{r}
 
-hospital_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue + net_charity_care_cost - 1,data = numeric_data)  
+hospital_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand - 1,data = numeric_data)  
 
 summary(hospital_fixed_effects) 
 
@@ -85,7 +89,7 @@ numeric_data %>% count(hospital_name.y) %>% arrange(by = n)
 ## Time Fixed Effects
 
 ```{r}
-time_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue + net_charity_care_cost - 1,data = numeric_data)  
+time_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand - 1,data = numeric_data)  
 
 summary(time_fixed_effects) 
 
@@ -113,7 +117,7 @@ coeftest(fixed_effects, vcov = vcovHC, type = "HC1")
 ## Add control variables to fixed effects regression.
 
 ```{r}
-Controls_added <- plm(difference_in_discharges ~ hospital_ownership_type + bed_size+ net_patient_revenue + net_charity_care_cost,
+Controls_added <- plm(difference_in_discharges ~ hospital_ownership_type + bed_size+ net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
                      data = numeric_data,
                      index = c("year","hospital_name.y"),
                      model = "within",
