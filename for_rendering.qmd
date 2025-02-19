@@ -34,13 +34,15 @@ library(readxl)
 Fully_combined_dataset <- read_excel("Fully_combined_dataset.xlsx")
 View(Fully_combined_dataset)
 
-class("net_patient_revenue")
-class("net_charity_care_cost")
+
+#class("net_patient_revenue")
+#class("net_charity_care_cost")
 
 numeric_data <- Fully_combined_dataset %>%
   transform(net_patient_revenue = as.numeric(net_patient_revenue)) %>%
   transform(net_charity_care_cost = as.numeric(net_charity_care_cost)) %>%
-  mutate(net_patient_revenue_hundred_thousand = net_patient_revenue/100000) %>% mutate(net_charity_care_cost_ten_thousand = net_charity_care_cost/10000)
+  mutate(net_patient_revenue_hundred_thousand = net_patient_revenue/100000) %>%
+  mutate(net_charity_care_cost_ten_thousand = net_charity_care_cost/10000) %>% mutate(year = as.factor(year))
   
 ```
 
@@ -82,7 +84,8 @@ glance(hospital_fixed_effects)
 
 coeftest(hospital_fixed_effects, vcov = vcovHC, type = "HC1")
 
-numeric_data %>% count(hospital_name.y) %>% arrange(by = n) 
+#numeric_data %>% count(hospital_name.y) %>% arrange(by = n) 
+
 #ask an economist. Could do entity wise demeaning. Do I have too many fixed effects for my dataset size?
 ```
 
