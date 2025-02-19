@@ -14,10 +14,7 @@ Load necessary libraries:
 
 ```{r}
 library(tidyverse)
-library(tidyr)
-library(dplyr)
 library(janitor)
-library(ggplot2)
 library(hrbrthemes)
 library(GGally)
 library(tabulator)
@@ -36,57 +33,65 @@ library(lmtest)
 library(readxl)
 Fully_combined_dataset <- read_excel("Fully_combined_dataset.xlsx")
 View(Fully_combined_dataset)
+
+class("net_patient_revenue")
+class("net_charity_care_cost")
+
+numeric_data <- Fully_combined_dataset %>% transform(net_patient_revenue = as.numeric(net_patient_revenue)) %>% transform(net_charity_care_cost = as.numeric(net_charity_care_cost))
 ```
 
 ## Naive linear regression.
 
 ```{r}
 
-initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type,data = Fully_combined_dataset)
+initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type,data = numeric_data)
 
 summary(initial_reg)
 
 glance(initial_reg)
 
-coeftest(initial_reg, vcov = vcovHC, type = "HC1")[1, ]
+coeftest(initial_reg, vcov = vcovHC, type = "HC1")
 ```
 
 ## Linear regression with controls.
 
 ```{r}
 
-linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue + net_charity_care_cost,data = Fully_combined_dataset)  
+linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue + net_charity_care_cost,data = numeric_data)  
 
 summary(linear_control) 
 
 glance(linear_control)
 
-coeftest(linear_control, vcov = vcovHC, type = "HC1")[1, ]
+coeftest(linear_control, vcov = vcovHC, type = "HC1")
 ```
 
 ## Hospital Fixed Effects
 
 ```{r}
 
-hospital_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue + net_charity_care_cost - 1,data = Fully_combined_dataset)  
+hospital_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue + net_charity_care_cost - 1,data = numeric_data)  
 
 summary(hospital_fixed_effects) 
 
 glance(hospital_fixed_effects)
 
-coeftest(hospital_fixed_effects, vcov = vcovHC, type = "HC1")[1, ]
+coeftest(hospital_fixed_effects, vcov = vcovHC, type = "HC1")
+
+numeric_data %>% count(hospital_name.y) %>% arrange(by = n) 
+#ask an economist. Could do entity wise demeaning. Do I have too many fixed effects for my dataset size?
 ```
 
 ## Time Fixed Effects
 
 ```{r}
-time_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue + net_charity_care_cost - 1,data = Fully_combined_dataset)  
+time_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue + net_charity_care_cost - 1,data = numeric_data)  
 
 summary(time_fixed_effects) 
 
 glance(time_fixed_effects)
 
-coeftest(time_fixed_effects, vcov = vcovHC, type = "HC1")[1, ]
+coeftest(time_fixed_effects, vcov = vcovHC, type = "HC1")
 ```
 
 ## Simple two-way fixed effects regression.
@@ -94,7 +99,7 @@ coeftest(time_fixed_effects, vcov = vcovHC, type = "HC1")[1, ]
 ```{r}
 
 fixed_effects <- plm(difference_in_discharges ~ hospital_ownership_type,
-                     data = Fully_combined_dataset,
+                     data = numeric_data,
                      index = c("year","hospital_name.y"),
                      model = "within",
                      effect = "twoways")
@@ -102,14 +107,14 @@ fixed_effects <- plm(difference_in_discharges ~ hospital_ownership_type,
 summary(fixed_effects)
 glance(fixed_effects)
 
-coeftest(fixed_effects, vcov = vcovHC, type = "HC1")[1, ]
+coeftest(fixed_effects, vcov = vcovHC, type = "HC1")
 ```
 
 ## Add control variables to fixed effects regression.
 
 ```{r}
 Controls_added <- plm(difference_in_discharges ~ hospital_ownership_type + bed_size+ net_patient_revenue + net_charity_care_cost,
-                     data = Fully_combined_dataset,
+                     data = numeric_data,
                      index = c("year","hospital_name.y"),
                      model = "within",
                      effect = "twoways")
@@ -117,7 +122,7 @@ Controls_added <- plm(difference_in_discharges ~ hospital_ownership_type + bed_s
 summary(Controls_added)
 glance(Controls_added)
 
-coeftest(Controls_added, vcov = vcovHC, type = "HC1")[1, ]
+coeftest(Controls_added, vcov = vcovHC, type = "HC1")
 ```
 
 ## Just looking at a scatterplot
@@ -134,3 +139,44 @@ ggplot(data = Fully_combined_dataset,
 ggplot(data = Fully_combined_dataset,
        mapping = aes(x = difference_in_discharges, group = hospital_ownership_type, fill = hospital_ownership_type)) + geom_density(alpha =0.6) + theme_minimal()
 ```
+
+From Williams
+
+\#' Create a regression table with clustered standard errors and drop the\
+\#' coefficients from fixed effects.\
+\#'\
+\#' \@param model1\
+\#' \@param model2\
+\#' \@param model3\
+\#' \@param model4\
+\#'\
+\#' \@return\
+\#'\
+create_model_table \<- function(model1, model2, model3, model4) {\
+ \
+  drop_fe \<- function(x, fe = "state\|cz2000") {\
+   \
+    x\[!grepl(fe, names(x))\]\
+   \
+  }\
+ \
+  se \<- starprep(model1,\
+                 model2,\
+                 model3,\
+                 model4,\
+                 se_type = "HC1") %\>%\
+    map(drop_fe)\
+ \
+  model1\$coefficients \<- drop_fe(model1\$coefficients)\
+  model2\$coefficients \<- drop_fe(model2\$coefficients)\
+  model3\$coefficients \<- drop_fe(model3\$coefficients)\
+  model4\$coefficients \<- drop_fe(model4\$coefficients)\
+ \
+  stargazer(model1,\
+            model2,\
+            model3,\
+            model4,\
+            se = se,\
+            type = "html",\
+            digits = 5)\
+}
