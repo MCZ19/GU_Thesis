@@ -24,6 +24,9 @@ library(plm)
 library(openxlsx)
 library(sandwich)
 library(lmtest)
+library(stargazer)
+library(gt)
+library(patchwork)
 ```
 
 ## Load Cleaned Data
@@ -52,24 +55,41 @@ numeric_data <- Fully_combined_dataset %>%
 
 initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type,data = numeric_data)
 
-summary(initial_reg)
+linear_summary <- summary(initial_reg)
 
-glance(initial_reg)
+linear_glance <- glance(initial_reg)
 
-coeftest(initial_reg, vcov = vcovHC, type = "HC1")
+linear_tidy <- tidy(initial_reg)
+
+linear_coef <- coeftest(initial_reg, vcov = vcovHC, type = "HC1")
+
+table_initial_reg <- initial_reg %>% stargazer(type = "text", title = "Linear Regression Results", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3)
+
+#linear_table <- linear_tidy %>% gt()
+
+#linear_table_glance <- linear_glance %>% gt()
+
+#linear_viz <- ggplot(data = numeric_data, mapping = aes(x = year, y = ppc_version)) + geom_point()
+
+#linear_viz + plot_layout(linear_table + linear_table_glance) 
 ```
 
 ## Linear regression with controls.
 
 ```{r}
 
-linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand ,data = numeric_data)  
+linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand + year + hospital_name.y,data = numeric_data)  
 
 summary(linear_control) 
 
 glance(linear_control)
 
+View(tidy(linear_control))
+
 coeftest(linear_control, vcov = vcovHC, type = "HC1")
+
+table_control_linear_reg <- linear_control %>%
+  stargazer(type = "text", title = "Linear Regression Results", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3)
 ```
 
 ## Hospital Fixed Effects
@@ -113,7 +133,7 @@ fixed_effects <- plm(difference_in_discharges ~ hospital_ownership_type,
 
 summary(fixed_effects)
 glance(fixed_effects)
-
+tidy(fixed_effects)
 coeftest(fixed_effects, vcov = vcovHC, type = "HC1")
 ```
 
@@ -128,6 +148,7 @@ Controls_added <- plm(difference_in_discharges ~ hospital_ownership_type + bed_s
 
 summary(Controls_added)
 glance(Controls_added)
+tidy(Controls_added)
 
 coeftest(Controls_added, vcov = vcovHC, type = "HC1")
 ```
@@ -187,3 +208,45 @@ create_model_table \<- function(model1, model2, model3, model4) {\
             type = "html",\
             digits = 5)\
 }
+
+------------------------------------------------------------------------
+
+Direct patient care? -\>
+
+Along causal chain?
+
+Groft page 39 or 43. Mediator check on Direct Patient Care.
+
+Medicaid for patient income proxy. F test between them a charity care.
+
+I do have zip code. Could try to match to local info online. hospital referral region (HRR) data? Maybe check Dartmouth Atlas.
+
+------------------------------------------------------------------------
+
+library(tidyverse)\
+library(gt)\
+library(patchwork)\
+library(broom)\
+\
+model \<- lm(dist \~ speed, data = cars)\
+\
+\
+table_coef \<- model \|\>\
+tidy() \|\>\
+gt()\
+\
+table_model \<- model \|\>\
+  glance() \|\>\
+  gt()\
+\
+viz \<- ggplot(data = cars, aes(speed, dist)) +\
+  geom_point()
+
+------------------------------------------------------------------------
+
+<https://gt.rstudio.com/articles/case-study-gtcars.html>\
+<https://gt.rstudio.com/articles/case-study-clinical-tables.html>
+
+------------------------------------------------------------------------
+
+for hw testthat testcheck() add r script
