@@ -63,7 +63,7 @@ linear_tidy <- tidy(initial_reg)
 
 linear_coef <- coeftest(initial_reg, vcov = vcovHC, type = "HC1")
 
-table_initial_reg <- initial_reg %>% stargazer(type = "text", title = "Linear Regression Results", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3)
+table_initial_reg <- initial_reg %>% stargazer(type = "text", title = "Simple Linear Regression Results", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
 
 #linear_table <- linear_tidy %>% gt()
 
@@ -88,8 +88,8 @@ View(tidy(linear_control))
 
 coeftest(linear_control, vcov = vcovHC, type = "HC1")
 
-table_control_linear_reg <- linear_control %>%
-  stargazer(type = "text", title = "Linear Regression Results", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3)
+table_control_linear_reg <- linear_control %>% stargazer(type = "text", title = " Linear Regression Results with Controls", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
+
 ```
 
 ## Hospital Fixed Effects
@@ -103,6 +103,8 @@ summary(hospital_fixed_effects)
 glance(hospital_fixed_effects)
 
 coeftest(hospital_fixed_effects, vcov = vcovHC, type = "HC1")
+
+table_hospital_effects <- hospital_fixed_effects %>% stargazer(type = "text", title = "Hospital Fixed Effects Regression", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
 
 #numeric_data %>% count(hospital_name.y) %>% arrange(by = n) 
 
@@ -119,6 +121,8 @@ summary(time_fixed_effects)
 glance(time_fixed_effects)
 
 coeftest(time_fixed_effects, vcov = vcovHC, type = "HC1")
+
+table_time_effects <- time_fixed_effects %>% stargazer(type = "text", title = "Year Fixed Effects Regression", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
 ```
 
 ## Simple two-way fixed effects regression.
@@ -135,6 +139,8 @@ summary(fixed_effects)
 glance(fixed_effects)
 tidy(fixed_effects)
 coeftest(fixed_effects, vcov = vcovHC, type = "HC1")
+
+simple_twoway_fixed_effects <- fixed_effects %>% stargazer(type = "text", title = "Simple Two Way Fixed Effects Regression", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
 ```
 
 ## Add control variables to fixed effects regression.
@@ -151,6 +157,14 @@ glance(Controls_added)
 tidy(Controls_added)
 
 coeftest(Controls_added, vcov = vcovHC, type = "HC1")
+
+fixed_effects_control <- Controls_added %>% stargazer(type = "text", title = "Two Way Fixed Effects with Controls", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
+```
+
+## Stargazer Combined Table
+
+```{r}
+#CB
 ```
 
 ## Just looking at a scatterplot
