@@ -28,6 +28,9 @@ library(stargazer)
 library(gt)
 library(patchwork)
 library(estimatr)
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
 ```
 
 ## Load Cleaned Data
@@ -175,6 +178,12 @@ fixed_effects_control <- Controls_added %>% stargazer(type = "text", title = "Tw
 
 ```{r}
 
+tab_model(initial_reg, 
+          linear_control,
+          hospital_fixed_effects_plm,
+          time_fixed_effects_plm,
+          fixed_effects,
+          Controls_added)
 
 
 ```
