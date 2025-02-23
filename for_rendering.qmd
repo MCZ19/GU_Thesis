@@ -99,9 +99,9 @@ table_control_linear_reg <- linear_control %>% stargazer(type = "text", title = 
 
 #hospital_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand - 1,data = numeric_data)  
 
-hospital_fixed_effects_plm <- plm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
+hospital_fixed_effects_plm <- plm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
     data = numeric_data,
-    index = c("year", "hospital_name.y"),
+    index = c("hospital_name.y", "year"),
     model = "within")
 
 summary(hospital_fixed_effects_plm) 
@@ -121,15 +121,18 @@ table_hospital_effects <- hospital_fixed_effects_plm %>% stargazer(type = "text"
 ## Time Fixed Effects
 
 ```{r}
-time_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand - 1,data = numeric_data)  
+#time_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand - 1,data = numeric_data)  
 
-summary(time_fixed_effects) 
+time_fixed_effects_plm <- plm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
+                data = numeric_data)
 
-glance(time_fixed_effects)
+summary(time_fixed_effects_plm) 
 
-coeftest(time_fixed_effects, vcov = vcovHC, type = "HC1")
+glance(time_fixed_effects_plm)
 
-table_time_effects <- time_fixed_effects %>% stargazer(type = "text", title = "Year Fixed Effects Regression", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
+coeftest(time_fixed_effects_plm, vcov = vcovHC, type = "HC1")
+
+table_time_effects <- time_fixed_effects_plm %>% stargazer(type = "text", title = "Year Fixed Effects Regression", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
 ```
 
 ## Simple two-way fixed effects regression.
