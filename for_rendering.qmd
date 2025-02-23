@@ -178,14 +178,45 @@ fixed_effects_control <- Controls_added %>% stargazer(type = "text", title = "Tw
 
 ```{r}
 
-tab_model(initial_reg, 
+stargazer(initial_reg,
           linear_control,
-          hospital_fixed_effects_plm,
+          #fixed_effects, 
+          type = "text",
+          title = "Two Way Fixed Effects with Controls", 
+          report = "vcs*p",
+          single.row = TRUE,
+          ci = TRUE, 
+          ci.level = 0.95,
+          mean.sd = TRUE, 
+          p.auto = TRUE, 
+          digits = 3, 
+          se_type = "HC1")
+
+stargazer(hospital_fixed_effects_plm,
           time_fixed_effects_plm,
-          fixed_effects,
-          Controls_added)
+          type = "text",
+          title = "Two Way Fixed Effects with Controls", 
+          report = "vcs*p",
+          single.row = TRUE,
+          ci = TRUE, 
+          ci.level = 0.95,
+          mean.sd = TRUE, 
+          p.auto = TRUE, 
+          digits = 3, 
+          se_type = "HC1")
 
-
+stargazer(fixed_effects,
+          Controls_added,
+          type = "text",
+          title = "Two Way Fixed Effects with Controls", 
+          report = "vcs*p",
+          single.row = TRUE,
+          ci = TRUE, 
+          ci.level = 0.95,
+          mean.sd = TRUE, 
+          p.auto = TRUE, 
+          digits = 3, 
+          se_type = "HC1")
 ```
 
 ## Just looking at a scatterplot
