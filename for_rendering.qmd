@@ -178,7 +178,7 @@ fixed_effects_control <- Controls_added %>% stargazer(type = "text", title = "Tw
 
 ```{r}
 
-stargazer(initial_reg,
+Compare_lm_table <- stargazer(initial_reg,
           linear_control,
           #fixed_effects, 
           type = "text",
@@ -192,7 +192,9 @@ stargazer(initial_reg,
           digits = 3, 
           se_type = "HC1")
 
-stargazer(hospital_fixed_effects_plm,
+#summary(Compare_lm_table)
+
+Compare_single_effects_table <- stargazer(hospital_fixed_effects_plm,
           time_fixed_effects_plm,
           type = "text",
           title = "Two Way Fixed Effects with Controls", 
@@ -205,7 +207,9 @@ stargazer(hospital_fixed_effects_plm,
           digits = 3, 
           se_type = "HC1")
 
-stargazer(fixed_effects,
+#summary(Compare_single_effects_table)
+
+Compare_twoway_effects_table <- stargazer(fixed_effects,
           Controls_added,
           type = "text",
           title = "Two Way Fixed Effects with Controls", 
@@ -217,6 +221,10 @@ stargazer(fixed_effects,
           p.auto = TRUE, 
           digits = 3, 
           se_type = "HC1")
+
+#summary(Compare_twoway_effects_table)
+
+
 ```
 
 ## Just looking at a scatterplot
