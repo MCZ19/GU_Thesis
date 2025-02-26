@@ -67,7 +67,13 @@ linear_tidy <- tidy(initial_reg)
 
 linear_coef <- coeftest(initial_reg, vcov = vcovHC, type = "HC1")
 
-table_initial_reg <- initial_reg %>% stargazer(type = "text", title = "Simple Linear Regression Results", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
+table_initial_reg <- initial_reg %>% stargazer(type = "text",
+                                               title = "Simple Linear Regression Results",
+                                               report = "vcs",
+                                               single.row = TRUE,
+                                               digits = 3,
+                                               omit.stat = c("f","ser","rsq"),
+                                               se_type = "HC1")
 
 #linear_table <- linear_tidy %>% gt()
 
@@ -77,6 +83,8 @@ table_initial_reg <- initial_reg %>% stargazer(type = "text", title = "Simple Li
 
 #linear_viz + plot_layout(linear_table + linear_table_glance) 
 ```
+
+Get rid confidence intervals and p values.
 
 ## Linear regression with controls.
 
@@ -181,8 +189,8 @@ fixed_effects_control <- Controls_added %>% stargazer(type = "text", title = "Tw
 Compare_lm_table <- stargazer(initial_reg,
           linear_control,
           #fixed_effects, 
-          type = "text",
-          title = "Two Way Fixed Effects with Controls", 
+          type = "html",
+          title = "Simple Linear Regression vs. Linear Regression with Controls", 
           report = "vcs*p",
           single.row = TRUE,
           ci = TRUE, 
@@ -190,14 +198,15 @@ Compare_lm_table <- stargazer(initial_reg,
           mean.sd = TRUE, 
           p.auto = TRUE, 
           digits = 3, 
-          se_type = "HC1")
+          se_type = "HC1",
+          out = "Compare_lm_table.htm")
 
 #summary(Compare_lm_table)
 
 Compare_single_effects_table <- stargazer(hospital_fixed_effects_plm,
           time_fixed_effects_plm,
-          type = "text",
-          title = "Two Way Fixed Effects with Controls", 
+          type = "html",
+          title = "Hospital Fixed Effects vs. Year Fixed Effects", 
           report = "vcs*p",
           single.row = TRUE,
           ci = TRUE, 
@@ -205,14 +214,15 @@ Compare_single_effects_table <- stargazer(hospital_fixed_effects_plm,
           mean.sd = TRUE, 
           p.auto = TRUE, 
           digits = 3, 
-          se_type = "HC1")
+          se_type = "HC1",
+          out = "Compare_single_effects_table.htm")
 
 #summary(Compare_single_effects_table)
 
 Compare_twoway_effects_table <- stargazer(fixed_effects,
           Controls_added,
-          type = "text",
-          title = "Two Way Fixed Effects with Controls", 
+          type = "html",
+          title = "Simple Two Way Fixed Effects vs. Two Way Fixed Effects with Controls", 
           report = "vcs*p",
           single.row = TRUE,
           ci = TRUE, 
@@ -220,7 +230,8 @@ Compare_twoway_effects_table <- stargazer(fixed_effects,
           mean.sd = TRUE, 
           p.auto = TRUE, 
           digits = 3, 
-          se_type = "HC1")
+          se_type = "HC1",
+          out = "Compare_twoway_effects_table.htm")
 
 #summary(Compare_twoway_effects_table)
 
