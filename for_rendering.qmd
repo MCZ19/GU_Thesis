@@ -28,9 +28,7 @@ library(stargazer)
 library(gt)
 library(patchwork)
 library(estimatr)
-library(sjPlot)
-library(sjmisc)
-library(sjlabelled)
+library(tidymodels)
 ```
 
 ## Load Cleaned Data
@@ -39,7 +37,6 @@ library(sjlabelled)
 
 library(readxl)
 Fully_combined_dataset <- read_excel("Fully_combined_dataset.xlsx")
-View(Fully_combined_dataset)
 
 
 #class("net_patient_revenue")
@@ -53,11 +50,53 @@ numeric_data <- Fully_combined_dataset %>%
   
 ```
 
+Just noodling
+```{r}
+
+sum(is.na(numeric_data$bed_size)) 
+
+sum(is.na(numeric_data$net_charity_care_cost_ten_thousand))
+
+sum(is.na(numeric_data$net_patient_revenue_hundred_thousand))
+
+View(numeric_data %>% group_by(hospital_name.y) %>% select(year, bed_size, net_charity_care_cost_ten_thousand,
+                       net_patient_revenue_hundred_thousand))
+
+
+```
+
+
+Rockerfeller and burdett are nas for all 3 controls. 
+
+net charity care is missing for Memorial Hospital for Cancer and All and Roswell Park Cancer Institute. Missing Soldiers and Sailors Memorial Hospital early values net charity. 
+
+Look at recipes package. Prep and bake recipe. step impute functions.  
+
+## Dealing with Observation Irregularities 
+
+```{r}
+
+imputed <- numeric_data %>% filter(!hospital_name.y == "BURDETT CARE CENTER", 
+                                   !hospital_name.y == "ROCKEFFELLER UNIVERSITY HOSPITAL",
+                                   !hospital_name.y == "BURDETT CARE CENTER INC.",
+                                   !hospital_name.y == "BRUNSWICK HOSPITAL CENTER")
+
+
+knn_recipe <- recipe(formula = difference_in_discharges ~ ., data = imputed) %>%
+  step_normalize()
+
+```
+
+Remove Rockeffeller University Hospital and Burdett Care Center because they have NAs for all three of my controls. 
+Remove Brunswick Hospital Center because two controls have NAs. 
+Consider removing "MEMORIAL HOSPITAL FOR CANCER AND ALL" as net charity care no observations. 
+
+
 ## Naive linear regression.
 
 ```{r}
 
-initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type,data = numeric_data)
+initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type,data = imputed)
 
 linear_summary <- summary(initial_reg)
 
@@ -69,7 +108,7 @@ linear_coef <- coeftest(initial_reg, vcov = vcovHC, type = "HC1")
 
 table_initial_reg <- initial_reg %>% stargazer(type = "text",
                                                title = "Simple Linear Regression Results",
-                                               report = "vcs",
+                                               report = "vcs*",
                                                single.row = TRUE,
                                                digits = 3,
                                                omit.stat = c("f","ser","rsq"),
@@ -84,13 +123,11 @@ table_initial_reg <- initial_reg %>% stargazer(type = "text",
 #linear_viz + plot_layout(linear_table + linear_table_glance) 
 ```
 
-Get rid confidence intervals and p values.
-
 ## Linear regression with controls.
 
 ```{r}
 
-linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand + year + hospital_name.y,data = numeric_data)  
+linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand, data = numeric_data)  
 
 summary(linear_control) 
 
@@ -100,7 +137,14 @@ View(tidy(linear_control))
 
 coeftest(linear_control, vcov = vcovHC, type = "HC1")
 
-table_control_linear_reg <- linear_control %>% stargazer(type = "text", title = " Linear Regression Results with Controls", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
+table_control_linear_reg <- linear_control %>% stargazer(type = "text",
+                                               title = "Linear Regression with Controls Results",
+                                               report = "vcs*",
+                                               single.row = TRUE,
+                                               digits = 3,
+                                               omit.stat = c("f","ser","rsq"),
+                                               se_type = "HC1")
+
 
 ```
 
@@ -122,7 +166,14 @@ tidy(hospital_fixed_effects_plm)
 
 coeftest(hospital_fixed_effects_plm, vcov = vcovHC, type = "HC1")
 
-table_hospital_effects <- hospital_fixed_effects_plm %>% stargazer(type = "text", title = "Hospital Fixed Effects Regression", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
+table_hospital_effects <- hospital_fixed_effects_plm %>% stargazer(type = "text",
+                                               title = "Hospital Fixed Effect Regression Results",
+                                               report = "vcs*",
+                                               single.row = TRUE,
+                                               digits = 3,
+                                               omit.stat = c("f","ser","rsq"),
+                                               se_type = "HC1")
+
 
 #numeric_data %>% count(hospital_name.y) %>% arrange(by = n) 
 
@@ -134,8 +185,11 @@ table_hospital_effects <- hospital_fixed_effects_plm %>% stargazer(type = "text"
 ```{r}
 #time_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand - 1,data = numeric_data)  
 
-time_fixed_effects_plm <- plm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
-                data = numeric_data)
+time_fixed_effects_plm <- plm(difference_in_discharges ~ hospital_ownership_type + year + hospital_name.y + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
+                data = numeric_data,
+    index = c("hospital_name.y", "year"),
+    model = "within",
+    effect = "twoways")
 
 summary(time_fixed_effects_plm) 
 
@@ -143,7 +197,14 @@ glance(time_fixed_effects_plm)
 
 coeftest(time_fixed_effects_plm, vcov = vcovHC, type = "HC1")
 
-table_time_effects <- time_fixed_effects_plm %>% stargazer(type = "text", title = "Year Fixed Effects Regression", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
+table_time_effects <- time_fixed_effects_plm %>% stargazer(type = "text",
+                                               title = "Simple Linear Regression Results",
+                                               report = "vcs*",
+                                               single.row = TRUE,
+                                               digits = 3,
+                                               omit.stat = c("f","ser","rsq"),
+                                               se_type = "HC1")
+
 ```
 
 ## Simple two-way fixed effects regression.
@@ -161,7 +222,14 @@ glance(fixed_effects)
 tidy(fixed_effects)
 coeftest(fixed_effects, vcov = vcovHC, type = "HC1")
 
-simple_twoway_fixed_effects <- fixed_effects %>% stargazer(type = "text", title = "Simple Two Way Fixed Effects Regression", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
+simple_twoway_fixed_effects <- fixed_effects %>% stargazer(type = "text",
+                                               title = "Simple Linear Regression Results",
+                                               report = "vcs*",
+                                               single.row = TRUE,
+                                               digits = 3,
+                                               omit.stat = c("f","ser","rsq"),
+                                               se_type = "HC1")
+
 ```
 
 ## Add control variables to fixed effects regression.
@@ -179,27 +247,38 @@ tidy(Controls_added)
 
 coeftest(Controls_added, vcov = vcovHC, type = "HC1")
 
-fixed_effects_control <- Controls_added %>% stargazer(type = "text", title = "Two Way Fixed Effects with Controls", report = "vcs*p", single.row = TRUE, ci = TRUE, ci.level = 0.95, mean.sd = TRUE, p.auto = TRUE, digits = 3, se_type = "HC1")
+fixed_effects_control <- Controls_added %>%  stargazer(type = "text",
+                                               title = "Simple Linear Regression Results",
+                                               report = "vcs*",
+                                               single.row = TRUE,
+                                               digits = 3,
+                                               omit.stat = c("f","ser","rsq"),
+                                               se_type = "HC1")
 ```
+
+## Stargazer Prep
+```{r}
+m1 <- initial_reg
+m2 <- linear_control
+m3 <- hospital_fixed_effects_plm
+m4 <- time_fixed_effects_plm
+```
+
 
 ## Stargazer Combined Table
 
 ```{r}
 
-Compare_lm_table <- stargazer(initial_reg,
-          linear_control,
+Compare_lm_table <- stargazer(m1,
+          m2, m3, m4,
           #fixed_effects, 
-          type = "html",
+          type = "text",
           title = "Simple Linear Regression vs. Linear Regression with Controls", 
-          report = "vcs*p",
-          single.row = TRUE,
-          ci = TRUE, 
-          ci.level = 0.95,
-          mean.sd = TRUE, 
-          p.auto = TRUE, 
-          digits = 3, 
-          se_type = "HC1",
-          out = "Compare_lm_table.htm")
+                                               report = "vcs*",
+                                               single.row = TRUE,
+                                               digits = 3,
+                                               omit.stat = c("f","ser","rsq"),
+                                               se_type = "HC1")
 
 #summary(Compare_lm_table)
 
@@ -335,3 +414,16 @@ viz \<- ggplot(data = cars, aes(speed, dist)) +\
 ------------------------------------------------------------------------
 
 for hw testthat testcheck() add r script
+
+```{r}
+lark <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand + hos_majteach + hos_highuc + hos_res,
+   data = numeric_data) 
+
+glance(lark)
+
+tidy(lark)
+
+summary(lark)
+```
+
+Use case when to make urban vs rural divide.
