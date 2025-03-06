@@ -114,6 +114,7 @@ imputed <- bake(ratio_rec2,
                 numeric_te)
 
 summary(imputed$difference_in_discharges)
+summary(imputed)
 
 full_imputed <- cbind(numeric_data,
                       imputed)
@@ -140,8 +141,13 @@ imputed2 <- bake(ratio_rec4,
 summary(imputed2$difference_in_discharges)
 summary(imputed2)
 
+tidy(imputed2)
+
+name_change <- imputed2 %>% mutate(bed_size_imputed = bed_size) %>%
+  mutate(difference_in_discharges_imputed = difference_in_discharges) %>% mutate(net_charity_care_cost_ten_thousand_imputed = net_charity_care_cost_ten_thousand) %>% mutate(net_patient_revenue_hundred_thousand_imputed = net_patient_revenue_hundred_thousand) %>% select(ends_with("imputed"))
+  
 full_imputed2 <- cbind(numeric_data,
-                      imputed)
+                      name_change)
 
 ```
 
