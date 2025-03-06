@@ -29,6 +29,8 @@ library(gt)
 library(patchwork)
 library(estimatr)
 library(tidymodels)
+library(factoextra)
+library(cluster)
 ```
 
 ## Load Cleaned Data
@@ -81,7 +83,7 @@ View(numeric_data %>% group_by(hospital_name.y) %>%
               net_charity_care_cost_ten_thousand,
                        net_patient_revenue_hundred_thousand,
               difference_in_discharges,
-              hospital_ownership_type))
+              hospital_ownership_type, hospital_name.y))
 
 
 ```
@@ -92,6 +94,30 @@ Percent of missing observations.
 -Bed size is .0148 or 31 observations.
 -Net Charity Care Cost is .0548 or 115 obs.
 -Net Patient Revenue is .0157 or 33 obs. 
+
+## How many K?
+```{r}
+kmean_evaluation <- numeric_data %>% select(net_patient_revenue_hundred_thousand, bed_size,
+                                            net_charity_care_cost_ten_thousand, difference_in_discharges, 
+                                            inpatient_occupancy, 
+                                            operating_expenses,
+                                            fund_balance,
+                                            medicare_payer_mix,
+                                            hospital_expenses_inclusive_of_all_services,
+                                        capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services,
+                                            overhead_labor_cost,
+                                            medicare_operating_profit_margin,
+                                            payer_mix_adjusted_profit_loss_medicare,
+                                            commercial_hospital_operating_profit_loss,
+                                            direct_patient_care_labor_cost,
+                                            hospital_operating_labor_cost) %>%
+  na.omit()
+
+
+kmean_evaluation %>% 
+  fviz_nbclust(kmeans, method = "wss")
+```
+
 
 ## Data Imputation
 
@@ -120,13 +146,18 @@ summary(imputed2)
 name_change <- imputed2 %>% mutate(bed_size_imputed = bed_size) %>%
   mutate(difference_in_discharges_imputed = difference_in_discharges) %>% mutate(net_charity_care_cost_ten_thousand_imputed = net_charity_care_cost_ten_thousand) %>% mutate(net_patient_revenue_hundred_thousand_imputed = net_patient_revenue_hundred_thousand) %>% select(ends_with("imputed"))
 
-name_change2 <- as.data.frame(name_change)
-  
+kmeans_evaluation <- name_change %>% !is.nan(difference_in_discharges_imputed)
+
 full_imputed2 <- cbind(numeric_data,
-                      name_change2)
+                      name_change)
 
 summary(full_imputed2)
 class(full_imputed2)
+
+View(na.omit(name_change))
+
+#sum(is.nan(full_imputed2$difference_in_discharges_imputed))
+
 
 #full_imputed2 %>% count(is.na(hospital_name.y))
 
@@ -175,6 +206,14 @@ testglance4 <- glance(test4)
 Ideally would do all numeric predictors but that was taking forever. 
 
 medicaid_payer_mix is classified as a factor as is adjusted patient discharges and direct patient care fte per 1000 adjusted discharges.
+
+## Determine how many K to Use
+
+```{r}
+kmean_evaluation <- 
+
+```
+
 
 ## Dealing with Observation Irregularities 
 
