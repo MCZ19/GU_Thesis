@@ -95,7 +95,7 @@ Percent of missing observations.
 -Net Charity Care Cost is .0548 or 115 obs.
 -Net Patient Revenue is .0157 or 33 obs. 
 
-## How many K?
+## Choosing the K hyperparameter
 ```{r}
 kmean_evaluation <- numeric_data %>% select(net_patient_revenue_hundred_thousand, bed_size,
                                             net_charity_care_cost_ten_thousand, difference_in_discharges, 
@@ -115,9 +115,13 @@ kmean_evaluation <- numeric_data %>% select(net_patient_revenue_hundred_thousand
 
 
 kmean_evaluation %>% 
-  fviz_nbclust(kmeans, method = "wss")
+  fviz_nbclust(kmeans, 
+               k.max = 20,
+               method = "wss")
 ```
+Looks like an elbow at 13 and 19. 
 
+Sqrt of 1098 is about 33.14 for sqrt rule.
 
 ## Data Imputation
 
@@ -133,7 +137,7 @@ rec2 <- recipe(
 
 ratio_recipe3 <- rec2 %>%
   step_impute_knn(all_numeric_predictors(),
-                  neighbors = 3)
+                  neighbors = 13)
 
 ratio_rec4 <- prep(ratio_recipe3, training = numeric_tr2) 
 
@@ -142,19 +146,28 @@ imputed2 <- bake(ratio_rec4,
 
 summary(imputed2$difference_in_discharges)
 summary(imputed2)
+#Most missing values reduced to 24 with the exception of net patient revenue which
+#reduced to 33
 
 name_change <- imputed2 %>% mutate(bed_size_imputed = bed_size) %>%
   mutate(difference_in_discharges_imputed = difference_in_discharges) %>% mutate(net_charity_care_cost_ten_thousand_imputed = net_charity_care_cost_ten_thousand) %>% mutate(net_patient_revenue_hundred_thousand_imputed = net_patient_revenue_hundred_thousand) %>% select(ends_with("imputed"))
-
-kmeans_evaluation <- name_change %>% !is.nan(difference_in_discharges_imputed)
 
 full_imputed2 <- cbind(numeric_data,
                       name_change)
 
 summary(full_imputed2)
 class(full_imputed2)
+View(glance(full_imputed2))
 
-View(na.omit(name_change))
+removed_omits <- full_imputed2 %>%
+  select(bed_size_imputed,
+                   difference_in_discharges_imputed,
+                   net_charity_care_cost_ten_thousand_imputed,
+                   net_patient_revenue_hundred_thousand_imputed,
+                   hospital_ownership_type,
+         year,
+         hospital_name.y) %>% 
+  na.omit()
 
 #sum(is.nan(full_imputed2$difference_in_discharges_imputed))
 
@@ -206,14 +219,6 @@ testglance4 <- glance(test4)
 Ideally would do all numeric predictors but that was taking forever. 
 
 medicaid_payer_mix is classified as a factor as is adjusted patient discharges and direct patient care fte per 1000 adjusted discharges.
-
-## Determine how many K to Use
-
-```{r}
-kmean_evaluation <- 
-
-```
-
 
 ## Dealing with Observation Irregularities 
 
