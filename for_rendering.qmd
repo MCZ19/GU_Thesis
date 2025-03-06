@@ -96,11 +96,15 @@ Percent of missing observations.
 ## Data Imputation
 
 ```{r}
-impute_numeric_data <- numeric_data %>%
-  mutate(y_missing = if_else(is.na(difference_in_discharges) == TRUE, 
-                   NA,
-                   difference_in_discharges))
+#impute_numeric_data <- numeric_data %>%
+#  mutate(y_missing = if_else(is.na(difference_in_discharges) == TRUE, #
+#                   NA,
+#                   difference_in_discharges))
 
+
+numeric_tr <- numeric_data[numeric_data$bed_size == "training",]
+numeric_te <- numeric_data[numeric_data$bed_size == "testing",]
+numeric_whole <- numeric_te
 ```
 
 
