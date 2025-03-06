@@ -102,9 +102,24 @@ Percent of missing observations.
 #                   difference_in_discharges))
 
 
-numeric_tr <- numeric_data[numeric_data$bed_size == "training",]
-numeric_te <- numeric_data[numeric_data$bed_size == "testing",]
-numeric_whole <- numeric_te
+numeric_tr <- numeric_data
+numeric_te <- numeric_data
+numeric_te_whole <- numeric_te
+
+rec <- recipe(
+  bed_size ~ difference_in_discharges + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
+  data = numeric_te)
+
+ratio_recipe <- rec %>%
+  step_impute_knn(all_predictors(),
+                  neighbors = 3)
+
+ratio_rec2 <- prep(ratio_recipe, training = numeric_tr) 
+
+imputed <- bake(ratio_rec2,
+                numeric_te)
+
+summary(imputed$difference_in_discharges)
 ```
 
 
