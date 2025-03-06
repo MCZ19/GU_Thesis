@@ -50,6 +50,8 @@ numeric_data <- Fully_combined_dataset %>%
   
 ```
 
+Create dataset with different variable classes and rescaled for certain variables.
+
 ## Understanding data missingness
 
 ```{r}
@@ -90,6 +92,18 @@ Percent of missing observations.
 -Bed size is .0148 or 31 observations.
 -Net Charity Care Cost is .0548 or 115 obs.
 -Net Patient Revenue is .0157 or 33 obs. 
+
+## Data Imputation
+
+```{r}
+impute_numeric_data <- numeric_data %>%
+  mutate(y_missing = if_else(is.na(difference_in_discharges) == TRUE, 
+                   NA,
+                   difference_in_discharges))
+
+```
+
+
 
 ## Dealing with Observation Irregularities 
 
