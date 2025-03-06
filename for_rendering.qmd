@@ -55,7 +55,7 @@ Just noodling
 
 sum(is.na(numeric_data$bed_size)) 
 
-sum(is.na(numeric_data$net_charity_care_cost_ten_thousand))
+sum(is.na(numeric_data$net_charity_ca,re_cost_ten_thousand))
 
 sum(is.na(numeric_data$net_patient_revenue_hundred_thousand))
 
@@ -157,7 +157,8 @@ table_control_linear_reg <- linear_control %>% stargazer(type = "text",
 hospital_fixed_effects_plm <- plm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
     data = numeric_data,
     index = c("hospital_name.y", "year"),
-    model = "within")
+    model = "within",
+    effect = "individual")
 
 summary(hospital_fixed_effects_plm) 
 
@@ -269,16 +270,20 @@ m4 <- time_fixed_effects_plm
 
 ```{r}
 
-Compare_lm_table <- stargazer(m1,
-          m2, m3, m4,
-          #fixed_effects, 
+Complete_init_table <- stargazer(m1,
+          m2, 
+          m3, 
+          m4,
           type = "text",
-          title = "Simple Linear Regression vs. Linear Regression with Controls", 
+          title = "All Four Regression Models", 
                                                report = "vcs*",
                                                single.row = TRUE,
                                                digits = 3,
+                                               covariate.labels = c("Governmental Hospitals", "Non-Profit Hospitals", "Number of Beds", "Net Patient Revenue (Hundreds of Thousands of Dollars)", "Net Charity Care Costs (Tens of Thousands of Dollars"),
+                                               column.labels = c("Simple Linear", "Linear with Controls", "Hospital Fixed Effects", "Two Way Fixed Effects"),
                                                omit.stat = c("f","ser","rsq"),
-                                               se_type = "HC1")
+                                               se_type = "HC1",
+                                               dep.var.labels = "Observed vs. Expected PPCs")
 
 #summary(Compare_lm_table)
 
