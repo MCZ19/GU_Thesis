@@ -96,12 +96,6 @@ Percent of missing observations.
 ## Data Imputation
 
 ```{r}
-#impute_numeric_data <- numeric_data %>%
-#  mutate(y_missing = if_else(is.na(difference_in_discharges) == TRUE, #
-#                   NA,
-#                   difference_in_discharges))
-
-
 numeric_tr <- numeric_data
 numeric_te <- numeric_data
 numeric_te_whole <- numeric_te
@@ -120,6 +114,35 @@ imputed <- bake(ratio_rec2,
                 numeric_te)
 
 summary(imputed$difference_in_discharges)
+
+full_imputed <- cbind(numeric_data,
+                      imputed)
+
+#use diff in discharge as outcome
+
+numeric_tr2 <- numeric_data
+numeric_te2 <- numeric_data
+numeric_te_whole2 <- numeric_te2
+
+rec2 <- recipe(
+  net_patient_revenue_hundred_thousand ~ bed_size + difference_in_discharges + net_charity_care_cost_ten_thousand,
+  data = numeric_te2)
+
+ratio_recipe3 <- rec2 %>%
+  step_impute_knn(all_predictors(),
+                  neighbors = 3)
+
+ratio_rec4 <- prep(ratio_recipe3, training = numeric_tr2) 
+
+imputed2 <- bake(ratio_rec4,
+                numeric_te2)
+
+summary(imputed2$difference_in_discharges)
+summary(imputed2)
+
+full_imputed2 <- cbind(numeric_data,
+                      imputed)
+
 ```
 
 
