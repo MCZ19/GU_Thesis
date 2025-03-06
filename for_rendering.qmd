@@ -96,41 +96,17 @@ Percent of missing observations.
 ## Data Imputation
 
 ```{r}
-numeric_tr <- numeric_data
-numeric_te <- numeric_data
-numeric_te_whole <- numeric_te
-
-rec <- recipe(
-  bed_size ~ difference_in_discharges + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
-  data = numeric_te)
-
-ratio_recipe <- rec %>%
-  step_impute_knn(all_predictors(),
-                  neighbors = 3)
-
-ratio_rec2 <- prep(ratio_recipe, training = numeric_tr) 
-
-imputed <- bake(ratio_rec2,
-                numeric_te)
-
-summary(imputed$difference_in_discharges)
-summary(imputed)
-
-full_imputed <- cbind(numeric_data,
-                      imputed)
-
-#use diff in discharge as outcome
 
 numeric_tr2 <- numeric_data
 numeric_te2 <- numeric_data
 numeric_te_whole2 <- numeric_te2
 
 rec2 <- recipe(
-  net_patient_revenue_hundred_thousand ~ bed_size + difference_in_discharges + net_charity_care_cost_ten_thousand,
+  net_patient_revenue_hundred_thousand ~ bed_size + net_charity_care_cost_ten_thousand + difference_in_discharges + inpatient_occupancy + operating_expenses + fund_balance + medicare_payer_mix + hospital_expenses_inclusive_of_all_services + capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services + overhead_labor_cost + medicare_operating_profit_margin + payer_mix_adjusted_profit_loss_medicare + commercial_hospital_operating_profit_loss + direct_patient_care_labor_cost + hospital_operating_labor_cost,
   data = numeric_te2)
 
 ratio_recipe3 <- rec2 %>%
-  step_impute_knn(all_predictors(),
+  step_impute_knn(all_numeric_predictors(),
                   neighbors = 3)
 
 ratio_rec4 <- prep(ratio_recipe3, training = numeric_tr2) 
@@ -141,17 +117,64 @@ imputed2 <- bake(ratio_rec4,
 summary(imputed2$difference_in_discharges)
 summary(imputed2)
 
-tidy(imputed2)
-
 name_change <- imputed2 %>% mutate(bed_size_imputed = bed_size) %>%
   mutate(difference_in_discharges_imputed = difference_in_discharges) %>% mutate(net_charity_care_cost_ten_thousand_imputed = net_charity_care_cost_ten_thousand) %>% mutate(net_patient_revenue_hundred_thousand_imputed = net_patient_revenue_hundred_thousand) %>% select(ends_with("imputed"))
+
+name_change2 <- as.data.frame(name_change)
   
 full_imputed2 <- cbind(numeric_data,
-                      name_change)
+                      name_change2)
+
+summary(full_imputed2)
+class(full_imputed2)
+
+#full_imputed2 %>% count(is.na(hospital_name.y))
+
+#full_imputed2 %>% count(is.na(hospital_ownership_type))  
+
+#full_imputed2 %>% count(is.na(year))
+
+
+#just looking at a regressions
+
+test <- lm(difference_in_discharges_imputed ~ hospital_ownership_type, data = full_imputed2)
+
+summary(test)
+testglance <- glance(test)
+# 2075 obs.
+
+test2 <- lm(difference_in_discharges_imputed ~ hospital_ownership_type + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed, data = full_imputed2)  
+
+summary(test2)
+test2glance <- glance(test2)
+# 2066 obs.
+
+test3 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed,
+    data = full_imputed2,
+    index = c("hospital_name.y", "year"),
+    model = "within",
+    effect = "individual")
+
+summary(test3)
+testglance3 <- glance(test3)
+# 2066 obs.
+
+test4 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed,
+                data = full_imputed2,
+    index = c("hospital_name.y", "year"),
+    model = "within",
+    effect = "twoways")
+
+summary(test4)
+testglance4 <- glance(test4)
+# 2066 obs.
+
 
 ```
 
+Ideally would do all numeric predictors but that was taking forever. 
 
+medicaid_payer_mix is classified as a factor as is adjusted patient discharges and direct patient care fte per 1000 adjusted discharges.
 
 ## Dealing with Observation Irregularities 
 
@@ -161,11 +184,6 @@ imputed <- numeric_data %>% filter(!hospital_name.y == "BURDETT CARE CENTER",
                                    !hospital_name.y == "ROCKEFFELLER UNIVERSITY HOSPITAL",
                                    !hospital_name.y == "BURDETT CARE CENTER INC.",
                                    !hospital_name.y == "BRUNSWICK HOSPITAL CENTER")
-
-
-knn_recipe <- recipe(formula = difference_in_discharges ~ ., data = imputed) %>%
-  step_normalize()
-
 ```
 Rockerfeller and burdett are nas for all 3 controls. 
 
