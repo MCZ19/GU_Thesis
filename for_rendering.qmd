@@ -50,27 +50,46 @@ numeric_data <- Fully_combined_dataset %>%
   
 ```
 
-Just noodling
+## Understanding data missingness
+
 ```{r}
+#control variables 
+sum(is.na(numeric_data$bed_size))
+mean(is.na(numeric_data$bed_size))
 
-sum(is.na(numeric_data$bed_size)) 
-
-sum(is.na(numeric_data$net_charity_ca,re_cost_ten_thousand))
+sum(is.na(numeric_data$net_charity_care_cost_ten_thousand))
+mean(is.na(numeric_data$net_charity_care_cost_ten_thousand))
 
 sum(is.na(numeric_data$net_patient_revenue_hundred_thousand))
+mean(is.na(numeric_data$net_patient_revenue_hundred_thousand))
 
-View(numeric_data %>% group_by(hospital_name.y) %>% select(year, bed_size, net_charity_care_cost_ten_thousand,
-                       net_patient_revenue_hundred_thousand))
+#key dependent variable
+sum(is.na(numeric_data$difference_in_discharges))
+mean(is.na(numeric_data$difference_in_discharges))
+
+#key independent variable.
+sum(is.na(numeric_data$hospital_ownership_type))
+mean(is.na(numeric_data$hospital_ownership_type))
+
+
+#Look at a table with just the variables I am interested in.
+View(numeric_data %>% group_by(hospital_name.y) %>% 
+       select(year, 
+              bed_size, 
+              net_charity_care_cost_ten_thousand,
+                       net_patient_revenue_hundred_thousand,
+              difference_in_discharges,
+              hospital_ownership_type))
 
 
 ```
 
-
-Rockerfeller and burdett are nas for all 3 controls. 
-
-net charity care is missing for Memorial Hospital for Cancer and All and Roswell Park Cancer Institute. Missing Soldiers and Sailors Memorial Hospital early values net charity. 
-
-Look at recipes package. Prep and bake recipe. step impute functions.  
+Percent of missing observations.
+-Difference in Discharges is .4259 or 895 obs.
+-Hospital Ownership Type is .0048 or 10 obs. 
+-Bed size is .0148 or 31 observations.
+-Net Charity Care Cost is .0548 or 115 obs.
+-Net Patient Revenue is .0157 or 33 obs. 
 
 ## Dealing with Observation Irregularities 
 
@@ -86,6 +105,12 @@ knn_recipe <- recipe(formula = difference_in_discharges ~ ., data = imputed) %>%
   step_normalize()
 
 ```
+Rockerfeller and burdett are nas for all 3 controls. 
+
+net charity care is missing for Memorial Hospital for Cancer and All and Roswell Park Cancer Institute. Missing Soldiers and Sailors Memorial Hospital early values net charity. 
+
+Look at recipes package. Prep and bake recipe. step impute functions. 
+
 
 Remove Rockeffeller University Hospital and Burdett Care Center because they have NAs for all three of my controls. 
 Remove Brunswick Hospital Center because two controls have NAs. 
@@ -96,7 +121,7 @@ Consider removing "MEMORIAL HOSPITAL FOR CANCER AND ALL" as net charity care no 
 
 ```{r}
 
-initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type,data = imputed)
+initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type, data = imputed)
 
 linear_summary <- summary(initial_reg)
 
