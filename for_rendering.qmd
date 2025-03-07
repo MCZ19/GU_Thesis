@@ -169,6 +169,13 @@ removed_omits <- full_imputed2 %>%
          hospital_name.y) %>% 
   na.omit()
 
+curious <- removed_omits %>% summarize(mean(difference_in_discharges_imputed))
+#Mean is -1.935
+
+curious2 <- kmean_evaluation %>%
+  summarize(mean(difference_in_discharges))
+#Mean is -2.631
+
 #sum(is.nan(full_imputed2$difference_in_discharges_imputed))
 
 
@@ -178,23 +185,65 @@ removed_omits <- full_imputed2 %>%
 
 #full_imputed2 %>% count(is.na(year))
 
+imp_graph <- removed_omits %>%
+  ggplot(mapping = aes(y = difference_in_discharges_imputed,
+                       x = hospital_ownership_type)) +
+  geom_point(alpha = 0.4, shape = 16, color = "skyblue") + 
+  theme_minimal() + labs(title = "Graph using imputed data",
+                         y = "Difference in Discharges Imputed",
+                         x = "Hospital Ownership Type")
 
-#just looking at a regressions
+ori_graph <- numeric_data %>%
+  ggplot(mapping = aes(y = difference_in_discharges,
+                       x = hospital_ownership_type)) +
+  geom_point(alpha = 0.4, shape = 16, color = "red3") + 
+  theme_minimal() + labs(title = "Graph using initial data",
+                         y = "Difference in Discharges",
+                         x = "Hospital Ownership Type")
 
-test <- lm(difference_in_discharges_imputed ~ hospital_ownership_type, data = full_imputed2)
+imp_graph + ori_graph
+
+imp_graph_2 <- removed_omits %>%
+  ggplot(mapping = aes(y = difference_in_discharges_imputed,
+                       x = bed_size_imputed)) +
+  geom_point(alpha = 0.4, shape = 16, color = "skyblue") + 
+  theme_minimal() + labs(title = "Graph using imputed data",
+                         y = "Difference in Discharges Imputed",
+                         x = "Bed Size Imputed")
+
+ori_graph_2 <- numeric_data %>%
+  ggplot(mapping = aes(y = difference_in_discharges,
+                       x = bed_size)) +
+  geom_point(alpha = 0.4, shape = 16, color = "red3") + 
+  theme_minimal() + labs(title = "Graph using initial data",
+                         y = "Difference in Discharges",
+                         x = "Bed Size")
+
+imp_graph_2 + ori_graph_2
+
+```
+
+Ideally would do all numeric predictors but that was taking forever. 
+
+medicaid_payer_mix is classified as a factor as is adjusted patient discharges and direct patient care fte per 1000 adjusted discharges.
+
+## Imputed Regression Results
+
+```{r}
+test <- lm(difference_in_discharges_imputed ~ hospital_ownership_type, data = removed_omits)
 
 summary(test)
 testglance <- glance(test)
-# 2075 obs.
+#now 2066
 
-test2 <- lm(difference_in_discharges_imputed ~ hospital_ownership_type + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed, data = full_imputed2)  
+test2 <- lm(difference_in_discharges_imputed ~ hospital_ownership_type + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed, data = removed_omits)  
 
 summary(test2)
-test2glance <- glance(test2)
+testglance2 <- glance(test2)
 # 2066 obs.
 
 test3 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed,
-    data = full_imputed2,
+    data = removed_omits,
     index = c("hospital_name.y", "year"),
     model = "within",
     effect = "individual")
@@ -204,7 +253,7 @@ testglance3 <- glance(test3)
 # 2066 obs.
 
 test4 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed,
-                data = full_imputed2,
+                data = removed_omits,
     index = c("hospital_name.y", "year"),
     model = "within",
     effect = "twoways")
@@ -212,13 +261,27 @@ test4 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + year +
 summary(test4)
 testglance4 <- glance(test4)
 # 2066 obs.
-
-
 ```
 
-Ideally would do all numeric predictors but that was taking forever. 
+## Stargazer Results for Imputed Values 
 
-medicaid_payer_mix is classified as a factor as is adjusted patient discharges and direct patient care fte per 1000 adjusted discharges.
+```{r}
+Complete_imputed_table <- stargazer(test,
+          test2, 
+          test3, 
+          test4,
+          type = "text",
+          title = "KNN Imputed Regression Models", 
+                                               report = "vcs*",
+                                               single.row = TRUE,
+                                               digits = 3,
+                                               covariate.labels = c("Governmental Hospitals", "Non-Profit Hospitals", "Number of Beds", "Net Patient Revenue (Hundreds of Thousands of Dollars)", "Net Charity Care Costs (Tens of Thousands of Dollars"),
+                                               column.labels = c("Simple Linear", "Linear with Controls", "Hospital Fixed Effects", "Two Way Fixed Effects"),
+                                               omit.stat = c("f","ser","rsq"),
+                                               se_type = "HC1",
+                                               dep.var.labels = "Observed vs. Expected PPCs")
+```
+
 
 ## Dealing with Observation Irregularities 
 
