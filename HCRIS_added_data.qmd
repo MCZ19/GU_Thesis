@@ -22,6 +22,7 @@ library(readxl)
 library(broom)
 library(plm)
 library(openxlsx)
+library(purrr)
 ```
 
 Load in manually cleaned data set:
@@ -204,7 +205,29 @@ write.xlsx(Fully_combined, 'Fully_combined_dataset.xlsx')
 
 ## Add County Data
 ```{r}
+https://www.countyhealthrankings.org/sites/default/files/media/document/state/downloads/2011%20County%20Health%20Ranking%20New%20York%20Data%20-%20v4.xls 
 
+https://www.countyhealthrankings.org/sites/default/files/media/document/state/downloads/2012%20County%20Health%20Ranking%20New%20York%20Data%20-%20v4.xls
+
+https://www.countyhealthrankings.org/sites/default/files/media/document/2022%20County%20Health%20Rankings%20New%20York%20Data%20-%20v2.xlsx
+
+https://www.countyhealthrankings.org/sites/default/files/media/document/state/downloads/2014%20County%20Health%20Rankings%20New%20York%20Data%20-%20v6.xls
+
+download_county_data <- function(url, destfile){
+  download.file(url = url,
+                destfile = destfile)
+  Sys.sleep(1)
+}
+
+years <- c(2011:2022)
+
+urls <- paste0("https://www.countyhealthrankings.org/sites/default/files/media/document/state/downloads/",
+               years,
+               "%20County%20Health%20Ranking%20New%20York%20Data%20-%20v4.xls")
+
+output <- paste0("C:/Users/Mitchell/Documents/Thesis GU/Data", years, ".xls")
+
+walk2(.x = urls, .y = output, .f =download_county_data)
 ```
 
 
