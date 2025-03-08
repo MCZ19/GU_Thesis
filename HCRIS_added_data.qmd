@@ -202,6 +202,12 @@ Write fully combined data set to excel as a backup and for my advisor.
 write.xlsx(Fully_combined, 'Fully_combined_dataset.xlsx')
 ```
 
+## Add County Data
+```{r}
+
+```
+
+
 Naive linear regression.
 
 ```{r}
