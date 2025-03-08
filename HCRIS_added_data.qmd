@@ -22,7 +22,6 @@ library(readxl)
 library(broom)
 library(plm)
 library(openxlsx)
-library(purrr)
 ```
 
 Load in manually cleaned data set:
@@ -206,5 +205,72 @@ write.xlsx(Fully_combined, 'Fully_combined_dataset.xlsx')
 ## Add County Data
 ```{r}
 
+# 2011
+year_2011 <- read_excel("County_data/2011 County Health Ranking New York Data - v4.xlsx", 
+    sheet = "Additional Measure Data",
+    skip = 1)
+
+year_2011_v2 <- read_excel("County_data/2011 County Health Ranking New York Data - v4.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1)
+
+combined_2011 <- left_join(year_2011,
+                           year_2011_v2,
+                           by = "County")
+
+combined_2011 <- combined_2011 %>%
+  mutate(year = 2011)
+
+# 2012
+year_2012 <- read_excel("County_data/2012 County Health Ranking New York Data - v4.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1)
+
+year_2012_v2 <- read_excel("County_data/2012 County Health Ranking New York Data - v4.xlsx", 
+    sheet = "Additional Measure Data", skip = 1)
+
+combined_2012 <- left_join(year_2012,
+                           year_2012_v2,
+                           by = "County")
+
+combined_2012 <- combined_2012 %>%
+  mutate(year = 2012)
+
+# 2013
+year_2013 <- read_excel("County_data/2013 County Health Ranking New York Data - v1_0.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1)
+
+year_2013_v2 <- read_excel("County_data/2013 County Health Ranking New York Data - v1_0.xlsx", 
+    sheet = "Additional Measure Data", skip = 1)
+
+combined_2013 <- left_join(year_2013,
+                           year_2013_v2,
+                           by = "County")
+
+combined_2013 <- combined_2013 %>%
+  mutate(year = 2013)
+
+# 2014
+year_2014 <- read_excel("County_data/2014 County Health Rankings New York Data - v6.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1)
+
+year_2014_v2 <- read_excel("County_data/2014 County Health Rankings New York Data - v6.xlsx", 
+    sheet = "Additional Measure Data", skip = 1)
+
+combined_2014 <- left_join(year_2014,
+                           year_2014_v2,
+                           by = "County")
+
+combined_2014 <- combined_2014 %>%
+  mutate(year = 2014)
+
+# 2015
+
+
+# Final
+total_combined <- left_join(combined_2011,
+                            combined_2012,
+                            by = c("County",
+                              "year"))
+
+total_combined %>% select(contains("year"))
 ```
 
