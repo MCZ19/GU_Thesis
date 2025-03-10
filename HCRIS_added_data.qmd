@@ -202,7 +202,16 @@ Write fully combined data set to excel as a backup and for my advisor.
 write.xlsx(Fully_combined, 'Fully_combined_dataset.xlsx')
 ```
 
-## Add County Data
+## County Data
+
+```{r}
+
+```
+
+
+
+
+## Add Cross Sectional County Data
 ```{r}
 
 # 2011
@@ -274,3 +283,4 @@ total_combined <- left_join(combined_2011,
 total_combined %>% select(contains("year"))
 ```
 
+Did not finish above combination because of issues merging with year. 

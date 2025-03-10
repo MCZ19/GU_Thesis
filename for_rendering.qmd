@@ -113,11 +113,14 @@ kmean_evaluation <- numeric_data %>% select(net_patient_revenue_hundred_thousand
                                             hospital_operating_labor_cost) %>%
   na.omit()
 
+set.seed(03072025)
 
 kmean_evaluation %>% 
   fviz_nbclust(kmeans, 
                k.max = 20,
-               method = "wss")
+               method = "wss") + 
+  geom_vline(xintercept = 13, linetype = 2)
+
 ```
 Looks like an elbow at 13 and 19. 
 
