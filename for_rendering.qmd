@@ -69,6 +69,15 @@ mean(is.na(numeric_data$net_charity_care_cost_ten_thousand))
 sum(is.na(numeric_data$net_patient_revenue_hundred_thousand))
 mean(is.na(numeric_data$net_patient_revenue_hundred_thousand))
 
+sum(is.na(numeric_data$medicaid_payer_mix_numeric))
+mean(is.na(numeric_data$medicaid_payer_mix_numeric))
+
+sum(is.na(numeric_data$medicare_payer_mix))
+mean(is.na(numeric_data$medicare_payer_mix))
+
+sum(is.na(numeric_data$inpatient_occupancy))
+mean(is.na(numeric_data$inpatient_occupancy))
+
 #key dependent variable
 sum(is.na(numeric_data$difference_in_discharges))
 mean(is.na(numeric_data$difference_in_discharges))
@@ -85,7 +94,11 @@ View(numeric_data %>% group_by(hospital_name.y) %>%
               net_charity_care_cost_ten_thousand,
                        net_patient_revenue_hundred_thousand,
               difference_in_discharges,
-              hospital_ownership_type, hospital_name.y))
+              hospital_ownership_type, 
+              hospital_name.y, 
+              medicaid_payer_mix_numeric,
+              medicare_payer_mix,
+              inpatient_occupancy))
 
 
 ```
@@ -95,7 +108,27 @@ Percent of missing observations.
 -Hospital Ownership Type is .0048 or 10 obs. 
 -Bed size is .0148 or 31 observations.
 -Net Charity Care Cost is .0548 or 115 obs.
--Net Patient Revenue is .0157 or 33 obs. 
+-Net Patient Revenue is .0157 or 33 obs.
+-Medicaid Payer Mix is .0615 or 129 obs. 
+-Medicare Payer Mix is .0143 or 30 obs. 
+-Inpatient Occupancy is .0248 or 52 obs. 
+
+## F-tests between certain variables
+```{r}
+
+var.test(numeric_data$bed_size, 
+          numeric_data$inpatient_occupancy, 
+          alternative = "two.sided")
+#p value is 2.2e-16. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+
+var.test(numeric_data$net_charity_care_cost_ten_thousand,
+         numeric_data$medicaid_payer_mix_numeric)
+#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+
+
+
+```
+
 
 ## Choosing the K hyperparameter
 ```{r}
@@ -159,6 +192,7 @@ name_change <- imputed2 %>% mutate(bed_size_imputed = bed_size) %>%
   mutate(difference_in_discharges_imputed = difference_in_discharges) %>% mutate(net_charity_care_cost_ten_thousand_imputed = net_charity_care_cost_ten_thousand) %>% mutate(net_patient_revenue_hundred_thousand_imputed = net_patient_revenue_hundred_thousand) %>%
   mutate(medicaid_payer_mix_numeric_imputed = medicaid_payer_mix_numeric) %>%
   mutate(medicare_payer_mix_imputed = medicare_payer_mix) %>%
+  mutate(inpatient_occupancy_imputed = inpatient_occupancy) %>%
   select(ends_with("imputed"))
 
 full_imputed2 <- cbind(numeric_data,
@@ -177,7 +211,8 @@ removed_omits <- full_imputed2 %>%
          year,
          hospital_name.y,
          medicaid_payer_mix_numeric_imputed,
-         medicare_payer_mix_imputed) %>% 
+         medicare_payer_mix_imputed,
+         inpatient_occupancy_imputed) %>% 
   na.omit()
 
 curious <- removed_omits %>% summarize(mean(difference_in_discharges_imputed))
@@ -247,13 +282,13 @@ summary(test)
 testglance <- glance(test)
 #now 2066
 
-test2 <- lm(difference_in_discharges_imputed ~ hospital_ownership_type + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed, data = removed_omits)  
+test2 <- lm(difference_in_discharges_imputed ~ hospital_ownership_type + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed, data = removed_omits)  
 
 summary(test2)
 testglance2 <- glance(test2)
 # 2066 obs.
 
-test3 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed,
+test3 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed,
     data = removed_omits,
     index = c("hospital_name.y", "year"),
     model = "within",
@@ -263,7 +298,7 @@ summary(test3)
 testglance3 <- glance(test3)
 # 2066 obs.
 
-test4 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed,
+test4 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed,
                 data = removed_omits,
     index = c("hospital_name.y", "year"),
     model = "within",
@@ -286,7 +321,12 @@ Complete_imputed_table <- stargazer(test,
                                                report = "vcs*",
                                                single.row = TRUE,
                                                digits = 3,
-                                               covariate.labels = c("Governmental Hospitals", "Non-Profit Hospitals", "Number of Beds", "Net Patient Revenue (Hundreds of Thousands of Dollars)", "Net Charity Care Costs (Tens of Thousands of Dollars"),
+                                               covariate.labels = c("Governmental Hospitals",
+                                                                    "Non-Profit Hospitals", "Number of Beds",
+                                                                    "Net Patient Revenue (Hundreds of Thousands of Dollars)",
+                                                                    "Net Charity Care Costs (Tens of Thousands of Dollars",
+                                                                    "Medicare Payer Mix",
+                                                                    "Medicaid Payer Mix"), 
                                                column.labels = c("Simple Linear", "Linear with Controls", "Hospital Fixed Effects", "Two Way Fixed Effects"),
                                                omit.stat = c("f","ser","rsq"),
                                                se_type = "HC1",
@@ -294,6 +334,10 @@ Complete_imputed_table <- stargazer(test,
 ```
 
 Maybe do an f test between medicaid and charity care costs. 
+
+direct patient care labor hours f test with beds?
+
+inpatient occupancy
 
 ## Dealing with Observation Irregularities 
 
