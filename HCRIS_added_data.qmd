@@ -217,70 +217,187 @@ write.xlsx(Fully_combined, 'Fully_combined_dataset.xlsx')
 # 2011
 year_2011 <- read_excel("County_data/2011 County Health Ranking New York Data - v4.xlsx", 
     sheet = "Additional Measure Data",
-    skip = 1)
+    skip = 1) %>%
+  drop_na(County)
 
 year_2011_v2 <- read_excel("County_data/2011 County Health Ranking New York Data - v4.xlsx", 
-    sheet = "Ranked Measure Data", skip = 1)
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
 
-combined_2011 <- left_join(year_2011,
+combined_2011 <- full_join(year_2011,
                            year_2011_v2,
-                           by = "County")
+                           by = "County",
+                           keep = FALSE)
 
 combined_2011 <- combined_2011 %>%
-  mutate(year = 2011)
+  mutate(year = 2011) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         rural,
+         female,
+         percent_children_in_poverty, percent_unemployed,
+         percent_smokers,
+         percent_obese,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         household_income,
+         mentally_unhealthy_days,
+         population_4,
+         x65_and_over,
+         african_american,
+         hispanic,
+         percent_not_proficient_in_english)
 
 # 2012
 year_2012 <- read_excel("County_data/2012 County Health Ranking New York Data - v4.xlsx", 
-    sheet = "Ranked Measure Data", skip = 1)
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
 
 year_2012_v2 <- read_excel("County_data/2012 County Health Ranking New York Data - v4.xlsx", 
-    sheet = "Additional Measure Data", skip = 1)
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
 
-combined_2012 <- left_join(year_2012,
+combined_2012 <- full_join(year_2012,
                            year_2012_v2,
-                           by = "County")
+                           by = "County",
+                           keep = FALSE)
 
 combined_2012 <- combined_2012 %>%
-  mutate(year = 2012)
+  mutate(year = 2012) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         rural,
+         female,
+         percent_children_in_poverty, percent_unemployed,
+         percent_smokers,
+         percent_obese,
+         percent_excessive_drinking,
+         percent_uninsured_x, 
+         household_income,
+         mentally_unhealthy_days,
+         population_4,
+         x65_and_over,
+         african_american,
+         hispanic,
+         percent_not_proficient_in_english) %>%
+  mutate(percent_uninsured = percent_uninsured_x) %>% select(-percent_uninsured_x)
+
+# combine 2011 and 2012
+rm(year_2011, 
+   year_2011_v2,
+   year_2012,
+   year_2012_v2)
+
+Combined2011and2012 <- full_join(combined_2011,
+                            combined_2012,
+                            by = c("county",
+         "year",
+         "rural",
+         "female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_4",
+         "x65_and_over",
+         "african_american",
+         "hispanic",
+         "percent_not_proficient_in_english"))
 
 # 2013
 year_2013 <- read_excel("County_data/2013 County Health Ranking New York Data - v1_0.xlsx", 
-    sheet = "Ranked Measure Data", skip = 1)
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
 
 year_2013_v2 <- read_excel("County_data/2013 County Health Ranking New York Data - v1_0.xlsx", 
-    sheet = "Additional Measure Data", skip = 1)
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
 
-combined_2013 <- left_join(year_2013,
+combined_2013 <- full_join(year_2013,
                            year_2013_v2,
                            by = "County")
 
 combined_2013 <- combined_2013 %>%
-  mutate(year = 2013)
+  mutate(year = 2013) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         rural,
+         female,
+         percent_children_in_poverty, percent_unemployed,
+         percent_smokers,
+         percent_obese,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         household_income,
+         mentally_unhealthy_days,
+         population_y,
+         x65_and_over,
+         african_american,
+         hispanic,
+         percent_not_proficient_in_english)
+
+#View(combined_2013 %>% select(county, contains("population")))
 
 # 2014
 year_2014 <- read_excel("County_data/2014 County Health Rankings New York Data - v6.xlsx", 
-    sheet = "Ranked Measure Data", skip = 1)
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
 
 year_2014_v2 <- read_excel("County_data/2014 County Health Rankings New York Data - v6.xlsx", 
-    sheet = "Additional Measure Data", skip = 1)
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
 
 combined_2014 <- left_join(year_2014,
                            year_2014_v2,
                            by = "County")
 
 combined_2014 <- combined_2014 %>%
-  mutate(year = 2014)
+  mutate(year = 2014) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         rural,
+         female,
+         percent_children_in_poverty, percent_unemployed,
+         percent_smokers,
+         percent_obese,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         household_income,
+         mentally_unhealthy_days,
+         population_y,
+         x65_and_over,
+         african_american,
+         hispanic,
+         percent_not_proficient_in_english)
 
 # 2015
 
 
 # Final
-total_combined <- left_join(combined_2011,
-                            combined_2012,
-                            by = c("County",
-                              "year"))
+rm(year_2011, 
+   year_2011_v2,
+   year_2012,
+   year_2012_v2)
 
-total_combined %>% select(contains("year"))
+intersect(names(combined_2011), (combined_2012))
+
+Combine_2011_2012 <- full_join(combined_2011,
+                            combined_2012,
+                            by = c("County", "year"),
+                            keep = FALSE)
+
+Combine_2011_2012 <- Combine_2011_2012 %>% pivot_longer(cols = c("year_2011", "year_2012"),
+                                   names_to = "year",
+                                   values_to = "value")
+
+Combine_2011_2012 %>% select(contains("female"))
 ```
 
 Did not finish above combination because of issues merging with year. 
