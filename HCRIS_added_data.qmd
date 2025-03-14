@@ -307,7 +307,8 @@ Combined2011and2012 <- full_join(combined_2011,
          "x65_and_over",
          "african_american",
          "hispanic",
-         "percent_not_proficient_in_english"))
+         "percent_not_proficient_in_english")) %>%
+  mutate(population_y = population_4)
 
 # 2013
 year_2013 <- read_excel("County_data/2013 County Health Ranking New York Data - v1_0.xlsx", 
@@ -377,27 +378,577 @@ combined_2014 <- combined_2014 %>%
          hispanic,
          percent_not_proficient_in_english)
 
+#combine 2013 and 2014
+rm(year_2013, 
+   year_2013_v2,
+   year_2014,
+   year_2014_v2)
+
+
+Combined2013and2014 <- full_join(combined_2013,
+                            combined_2014,
+                            by = c("county",
+         "year",
+         "rural",
+         "female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "x65_and_over",
+         "african_american",
+         "hispanic",
+         "percent_not_proficient_in_english"))
+
+# Combine 2011 - 2014
+rm(combined_2011,
+   combined_2012,
+   combined_2013,
+   combined_2014)
+
+Combined2011through2014 <- full_join(Combined2011and2012,
+                            Combined2013and2014,
+                            by = c("county",
+         "year",
+         "rural",
+         "female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "x65_and_over",
+         "african_american",
+         "hispanic",
+         "percent_not_proficient_in_english"))
+
+rm(Combined2011and2012,
+   Combined2013and2014)
+
 # 2015
 
+year_2015 <- read_excel("County_data/2015 County Health Rankings New York Data - v3.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
 
-# Final
-rm(year_2011, 
-   year_2011_v2,
-   year_2012,
-   year_2012_v2)
+year_2015_v2 <- read_excel("County_data/2015 County Health Rankings New York Data - v3.xlsx", 
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
 
-intersect(names(combined_2011), (combined_2012))
+combined_2015 <- left_join(year_2015,
+                           year_2015_v2,
+                           by = "County") %>%
+  mutate(year = 2015) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         percent_rural,
+         percent_female,
+         percent_children_in_poverty, percent_unemployed,
+         percent_smokers,
+         percent_obese,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         household_income,
+         mentally_unhealthy_days,
+         population_y,
+         percent_65_and_over,
+         percent_african_american,
+         percent_hispanic,
+         percent_not_proficient_in_english)
 
-Combine_2011_2012 <- full_join(combined_2011,
-                            combined_2012,
-                            by = c("County", "year"),
-                            keep = FALSE)
+# 2016
 
-Combine_2011_2012 <- Combine_2011_2012 %>% pivot_longer(cols = c("year_2011", "year_2012"),
-                                   names_to = "year",
-                                   values_to = "value")
+year_2016 <- read_excel("County_data/2016 County Health Rankings New York Data - v3.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
 
-Combine_2011_2012 %>% select(contains("female"))
+year_2016_v2 <- read_excel("County_data/2016 County Health Rankings New York Data - v3.xlsx", 
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
+
+combined_2016 <- left_join(year_2016,
+                           year_2016_v2,
+                           by = "County") %>%
+  mutate(year = 2016) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         percent_rural,
+         percent_female,
+         percent_children_in_poverty, percent_unemployed,
+         percent_smokers,
+         percent_obese,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         household_income,
+         mentally_unhealthy_days,
+         population_y,
+         percent_65_and_over,
+         percent_african_american,
+         percent_hispanic,
+         percent_not_proficient_in_english)
+
+# combine 2015 and 2016
+rm(year_2015,
+   year_2015_v2,
+   year_2016,
+   year_2016_v2)
+
+combined2015and2016 <- full_join(combined_2015,
+                                  combined_2016,
+                                  by = c("county",
+         "year",
+         "percent_rural",
+         "percent_female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "percent_65_and_over",
+         "percent_african_american",
+         "percent_hispanic",
+         "percent_not_proficient_in_english"))
+
+
+# 2017
+
+year_2017 <- read_excel("County_data/2017 County Health Rankings New York Data - v2.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
+
+year_2017_v2 <- read_excel("County_data/2017 County Health Rankings New York Data - v2.xlsx", 
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
+
+combined_2017 <- left_join(year_2017,
+                           year_2017_v2,
+                           by = "County") %>%
+  mutate(year = 2017) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         percent_rural,
+         percent_female,
+         percent_children_in_poverty, percent_unemployed,
+         percent_smokers,
+         percent_obese,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         household_income,
+         mentally_unhealthy_days,
+         population_y,
+         percent_65_and_over,
+         percent_african_american,
+         percent_hispanic,
+         percent_not_proficient_in_english)
+
+# 2018
+year_2018 <- read_excel("County_data/2018 County Health Rankings New York Data - v3.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
+
+year_2018_v2 <- read_excel("County_data/2018 County Health Rankings New York Data - v3.xlsx", 
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
+
+combined_2018 <- left_join(year_2018,
+                           year_2018_v2,
+                           by = "County") %>%
+  mutate(year = 2018) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         percent_rural,
+         percent_female,
+         percent_children_in_poverty, percent_unemployed,
+         percent_smokers,
+         percent_obese,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         household_income,
+         mentally_unhealthy_days,
+         population_y,
+         percent_65_and_over,
+         percent_african_american,
+         percent_hispanic,
+         percent_not_proficient_in_english)
+
+# Combine 2017 and 2018
+rm(year_2017,
+   year_2017_v2,
+   year_2018,
+   year_2018_v2)
+
+combined2017and2018 <- full_join(combined_2017,
+                                  combined_2018,
+                                  by = c("county",
+         "year",
+         "percent_rural",
+         "percent_female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "percent_65_and_over",
+         "percent_african_american",
+         "percent_hispanic",
+         "percent_not_proficient_in_english"))
+
+# combine 2015-2018
+rm(combined_2015,
+   combined_2016,
+   combined_2017,
+   combined_2018) 
+
+combined2015thru2018 <- full_join(combined2015and2016,
+                                  combined2017and2018,
+                                  by = c("county",
+         "year",
+         "percent_rural",
+         "percent_female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "percent_65_and_over",
+         "percent_african_american",
+         "percent_hispanic",
+         "percent_not_proficient_in_english"))
+
+rm(combined2015and2016,
+   combined2017and2018)
+
+# 2019
+
+year_2019 <- read_excel("County_data/2019 County Health Rankings New York Data - v1_0.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
+
+year_2019_v2 <- read_excel("County_data/2019 County Health Rankings New York Data - v1_0.xlsx", 
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
+
+combined_2019 <- left_join(year_2019,
+                           year_2019_v2,
+                           by = "County") %>%
+  mutate(year = 2019) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         percent_rural,
+         percent_female,
+         percent_children_in_poverty, 
+         percent_unemployed,
+         percent_smokers,
+         percent_obese,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         household_income,
+         mentally_unhealthy_days,
+         population_y,
+         percent_65_and_over,
+         percent_african_american,
+         percent_hispanic,
+         percent_not_proficient_in_english)
+
+# 2020
+
+year_2020 <- read_excel("County_data/2020 County Health Rankings New York Data - v1_0.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
+
+year_2020_v2 <- read_excel("County_data/2020 County Health Rankings New York Data - v1_0.xlsx", 
+    sheet = "Additional Measure Data", skip = 1)%>%
+  drop_na(County)
+
+combined_2020 <- left_join(year_2020,
+                           year_2020_v2,
+                           by = "County") %>%
+  mutate(year = 2020) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         percent_rural,
+         percent_female,
+         percent_children_in_poverty, 
+         percent_unemployed,
+         percent_smokers,
+         percent_adults_with_obesity,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         median_household_income,
+         average_number_of_mentally_unhealthy_days,
+         population_y,
+         percent_65_and_over,
+         percent_black,
+         percent_hispanic,
+         percent_not_proficient_in_english) %>%
+  mutate(percent_obese = percent_adults_with_obesity,
+        percent_african_american  = percent_black,
+       household_income = median_household_income,
+       mentally_unhealthy_days = average_number_of_mentally_unhealthy_days) %>% 
+  select(-percent_black,
+         -percent_adults_with_obesity,
+         -median_household_income,
+         -average_number_of_mentally_unhealthy_days)
+
+# combined 2019 and 2020
+rm(year_2019,
+   year_2019_v2,
+   year_2020,
+   year_2020_v2)
+
+combined2019and2020 <- full_join(combined_2019,
+                                  combined_2020,
+                                  by = c("county",
+         "year",
+         "percent_rural",
+         "percent_female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "percent_65_and_over",
+         "percent_african_american",
+         "percent_hispanic",
+         "percent_not_proficient_in_english"))
+
+rm(combined_2019,
+   combined_2020)
+
+# 2021
+
+
+year_2021 <- read_excel("County_data/2021 County Health Rankings New York Data - v1.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
+
+year_2021_v2 <- read_excel("County_data/2021 County Health Rankings New York Data - v1.xlsx", 
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
+
+combined_2021 <- left_join(year_2021,
+                           year_2021_v2,
+                           by = "County") %>%
+  mutate(year = 2021) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         percent_rural,
+         percent_female,
+         percent_children_in_poverty, 
+         percent_unemployed,
+         percent_smokers,
+         percent_adults_with_obesity,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         median_household_income,
+         average_number_of_mentally_unhealthy_days,
+         population,
+         percent_65_and_over,
+         percent_black,
+         percent_hispanic,
+         percent_not_proficient_in_english) %>%
+  mutate(percent_obese = percent_adults_with_obesity,
+        percent_african_american  = percent_black,
+       household_income = median_household_income,
+       mentally_unhealthy_days = average_number_of_mentally_unhealthy_days,
+       population_y = population) %>% 
+  select(-percent_black,
+         -percent_adults_with_obesity,
+         -median_household_income,
+         -average_number_of_mentally_unhealthy_days,
+         -population)
+
+#View(combined_2021 %>% select(contains("population")))
+
+# 2022
+year_2022 <- read_excel("County_data/2022 County Health Rankings New York Data - v2.xlsx", 
+    sheet = "Ranked Measure Data", skip = 1) %>%
+  drop_na(County)
+
+year_2022_v2 <- read_excel("County_data/2022 County Health Rankings New York Data - v2.xlsx", 
+    sheet = "Additional Measure Data", skip = 1) %>%
+  drop_na(County)
+
+combined_2022 <- left_join(year_2022,
+                           year_2022_v2,
+                           by = "County") %>%
+  mutate(year = 2022) %>%
+  clean_names() %>%
+  select(county,
+         year,
+         percent_rural,
+         percent_female,
+         percent_children_in_poverty, 
+         percent_unemployed,
+         percent_smokers,
+         percent_adults_with_obesity,
+         percent_excessive_drinking,
+         percent_uninsured, 
+         median_household_income,
+         average_number_of_mentally_unhealthy_days,
+         population,
+         percent_65_and_over,
+         percent_black,
+         percent_hispanic,
+         percent_not_proficient_in_english) %>%
+  mutate(percent_obese = percent_adults_with_obesity,
+        percent_african_american  = percent_black,
+       household_income = median_household_income,
+       mentally_unhealthy_days = average_number_of_mentally_unhealthy_days,
+       population_y = population) %>% 
+  select(-percent_black,
+         -percent_adults_with_obesity,
+         -median_household_income,
+         -average_number_of_mentally_unhealthy_days,
+         -population)
+
+# combine 2021 and 2022
+rm(year_2021,
+   year_2021_v2,
+   year_2022,
+   year_2022_v2)
+
+combined2021and2022 <- full_join(combined_2021,
+                                  combined_2022,
+                                  by = c("county",
+         "year",
+         "percent_rural",
+         "percent_female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "percent_65_and_over",
+         "percent_african_american",
+         "percent_hispanic",
+         "percent_not_proficient_in_english"))
+
+rm(combined_2021,
+   combined_2022)
+
+# combined 2019 through 2022
+
+combined2019thru2022 <- full_join(combined2019and2020,
+                                  combined2021and2022,
+                                  by = c("county",
+         "year",
+         "percent_rural",
+         "percent_female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "percent_65_and_over",
+         "percent_african_american",
+         "percent_hispanic",
+         "percent_not_proficient_in_english"))
+
+rm(combined2019and2020,
+   combined2021and2022)
+
+# combined 2015-2022
+
+combined2015thru2022 <- full_join(combined2015thru2018,
+                                  combined2019thru2022,
+                                  by = c("county",
+         "year",
+         "percent_rural",
+         "percent_female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "percent_65_and_over",
+         "percent_african_american",
+         "percent_hispanic",
+         "percent_not_proficient_in_english"))
+
+rm(combined2015thru2018,
+   combined2019thru2022)
+
+# final combo 2011 -2022
+
+combined2011thru2014 <- Combined2011through2014 %>%
+  mutate(percent_female = female,
+         percent_rural = rural,
+         percent_65_and_over = x65_and_over,
+         percent_hispanic = hispanic,
+         percent_african_american = african_american) %>%
+  select(-population_4,
+         -rural,
+         -x65_and_over,
+         -hispanic,
+         -african_american,
+         -female)
+
+
+combined2011thru2022 <- full_join(combined2011thru2014,
+                                  combined2015thru2022,
+                                  by = c("county",
+         "year",
+         "percent_rural",
+         "percent_female",
+         "percent_children_in_poverty", "percent_unemployed",
+         "percent_smokers",
+         "percent_obese",
+         "percent_excessive_drinking",
+         "percent_uninsured", 
+         "household_income",
+         "mentally_unhealthy_days",
+         "population_y",
+         "percent_65_and_over",
+         "percent_african_american",
+         "percent_hispanic",
+         "percent_not_proficient_in_english"))
+
+rm(combined2011thru2014,
+   Combined2011through2014,
+   combined2015thru2022)
+
+
+
 ```
 
-Did not finish above combination because of issues merging with year. 
+## Add HUD Crosswalk Data Zip to County 
+```{r}
+
+```
+
