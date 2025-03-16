@@ -936,6 +936,8 @@ rm(combined2011thru2014,
    combined2015thru2022)
 
 
+combined2011thru2022$county <- str_trim(combined2011thru2022$county)
+
 
 ```
 
@@ -971,140 +973,31 @@ USGS_info_NY <- read_csv("USGS_info_NY.csv") %>%
 
 USGS_info_NY <- USGS_info_NY %>%
           mutate(county = str_remove_all(county,
-                 "County"))
+                 "County")) 
+
+USGS_info_NY$county <- str_trim(USGS_info_NY$county)
 ```
 
 ## Combine Fully Combined and HUD
 ```{r}
-location_plus_fully_combined <- left_join(Fully_combined_dataset_original,
+location_plus_fully_combined <- inner_join(Fully_combined_dataset_original,
                                           Hud_county_zip_crosswalk,
-                                          by = "zip_code",
-                                          unmatched = "drop")
+                                          by = "zip_code")
 ```
 
 ## Match USGS to fully combined and HUD
 ```{r}
-Match <- left_join(location_plus_fully_combined,
+Match <- inner_join(location_plus_fully_combined,
                    USGS_info_NY,
                    by = "county_fips_code",
                    multiple = "first" ) 
 
-Match <- Match %>% 
-  mutate(county = str_remove_all(county,
-                 "County"))
 ```
-
-
-
-```{r}
-  left_join(combined2011thru2022,
-            )
-            
-```
-
 
 ## Finish Combining
 ```{r}
 Fully_combined <- left_join(Match,
                             combined2011thru2022,
                             by = c("year", "county"),
-                            multiple = "all",
-                            unmatched = "drop")
+                            multiple = "all")
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 2011-2022 and USGS
-```{r}
-
-matchedddd <- match(USGS_info_NY$county_fips_code,
-      location_plus_fully_combined$county_fips_code)
-
-print(matchedddd)
-
-
-
-USGS_2011_2022 <- left_join(combined2011thru2022,
-                            USGS_info_NY,
-                            by = )
-```
-
-
-
-figure out how to match 
-
-
-
-
-
-
-
-## Combine Location Plus and USGS
-```{r}
-full_location_plus_USGS <- left_join(location_plus_fully_combined,
-                                          USGS_info_NY,
-                                          by = "county_fips_code",
-                                          unmatched = "drop")
-```
-
-## Add County Data
-```{r}
-fully_combined_dataset <- left_join(full_location_plus_USGS,
-                                    combined2011thru2022,
-                                    by = "county") 
-
-                                    
-#sum(is.na(fully_combined_dataset$percent_unemployed))
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## Combine USGS and HUD Location Data
-```{r}
-location_data <- left_join(USGS_info_NY,
-                           Hud_county_zip_crosswalk,
-                           by = "county_fips_code",
-                           unmatched = "drop")
-  
-```
-
-## Combine location data and county level data
-```{r}
-full_county_data <- full_join(combined2011thru2022,
-                              location_data,
-                              by = "county")
-  
-```
-
-## Combine Hospital data and county/location data
-```{r}
-fully_combined_dataset <- left_join(Fully_combined_dataset_original,
-                                    full_county_data,
-                                    by = c("year" ))
-```
-
