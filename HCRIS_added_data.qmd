@@ -80,6 +80,7 @@ for_viz %>% ggplot(mapping = aes(x = `Hospital Ownership Type`, fill = Year, y =
 ```{r}
 for_viz %>% ggplot(mapping = aes(x = Year, group = `Hospital Ownership Type`, y = n, color = `Hospital Ownership Type`)) +
   geom_line() + scale_y_continuous(breaks = seq(0, 175, by = 25)) + theme_minimal()
+
 ```
 
 Merge manually cleaned set to cleaned NASHP data set by CCN.
@@ -201,15 +202,6 @@ Write fully combined data set to excel as a backup and for my advisor.
 ```{r}
 write.xlsx(Fully_combined, 'Fully_combined_dataset.xlsx')
 ```
-
-## County Data
-
-```{r}
-
-```
-
-
-
 
 ## Add Cross Sectional County Data
 ```{r}
@@ -947,8 +939,172 @@ rm(combined2011thru2014,
 
 ```
 
+
 ## Add HUD Crosswalk Data Zip to County 
 ```{r}
+Hud_county_zip_crosswalk <- read_excel("Hud_county_zip_crosswalk.xlsx") %>% clean_names() %>% 
+  filter(usps_zip_pref_state == "NY") %>% 
+   mutate(hospital_city.x = usps_zip_pref_city,
+          county_fips_code = county,
+          zip_code = zip) %>%
+   select(-res_ratio,
+         -bus_ratio,
+         -oth_ratio,
+         -tot_ratio,
+         -county,
+         -zip) 
 
+```
+
+## Add USGS Data for New York
+```{r}
+USGS_info_NY <- read_csv("USGS_info_NY.csv") %>%
+  clean_names() %>%
+  mutate(city = map) %>%
+     select(-bgn_decision_date,
+          -entry_date,
+          -census_classification_code,
+          -gsa_code,
+          -census_code,
+          -opm_code,
+          -map) 
+
+USGS_info_NY <- USGS_info_NY %>%
+          mutate(county = str_remove_all(county,
+                 "County"))
+```
+
+## Combine Fully Combined and HUD
+```{r}
+location_plus_fully_combined <- left_join(Fully_combined_dataset_original,
+                                          Hud_county_zip_crosswalk,
+                                          by = "zip_code",
+                                          unmatched = "drop")
+```
+
+## Match USGS to fully combined and HUD
+```{r}
+Match <- left_join(location_plus_fully_combined,
+                   USGS_info_NY,
+                   by = "county_fips_code",
+                   multiple = "first" ) 
+
+Match <- Match %>% 
+  mutate(county = str_remove_all(county,
+                 "County"))
+```
+
+
+
+```{r}
+  left_join(combined2011thru2022,
+            )
+            
+```
+
+
+## Finish Combining
+```{r}
+Fully_combined <- left_join(Match,
+                            combined2011thru2022,
+                            by = c("year", "county"),
+                            multiple = "all",
+                            unmatched = "drop")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 2011-2022 and USGS
+```{r}
+
+matchedddd <- match(USGS_info_NY$county_fips_code,
+      location_plus_fully_combined$county_fips_code)
+
+print(matchedddd)
+
+
+
+USGS_2011_2022 <- left_join(combined2011thru2022,
+                            USGS_info_NY,
+                            by = )
+```
+
+
+
+figure out how to match 
+
+
+
+
+
+
+
+## Combine Location Plus and USGS
+```{r}
+full_location_plus_USGS <- left_join(location_plus_fully_combined,
+                                          USGS_info_NY,
+                                          by = "county_fips_code",
+                                          unmatched = "drop")
+```
+
+## Add County Data
+```{r}
+fully_combined_dataset <- left_join(full_location_plus_USGS,
+                                    combined2011thru2022,
+                                    by = "county") 
+
+                                    
+#sum(is.na(fully_combined_dataset$percent_unemployed))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Combine USGS and HUD Location Data
+```{r}
+location_data <- left_join(USGS_info_NY,
+                           Hud_county_zip_crosswalk,
+                           by = "county_fips_code",
+                           unmatched = "drop")
+  
+```
+
+## Combine location data and county level data
+```{r}
+full_county_data <- full_join(combined2011thru2022,
+                              location_data,
+                              by = "county")
+  
+```
+
+## Combine Hospital data and county/location data
+```{r}
+fully_combined_dataset <- left_join(Fully_combined_dataset_original,
+                                    full_county_data,
+                                    by = c("year" ))
 ```
 
