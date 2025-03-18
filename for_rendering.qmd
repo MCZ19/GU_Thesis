@@ -187,90 +187,6 @@ knn_numerics <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
 ```
 
 
-## Choosing the K hyperparameter
-```{r}
-kmean_evaluation <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
-                                            bed_size,
-                                            net_charity_care_cost_ten_thousand,
-                                            difference_in_discharges, 
-                                            inpatient_occupancy, 
-                                            operating_expenses,
-                                            fund_balance,
-                                            medicare_payer_mix,
-                                            hospital_expenses_inclusive_of_all_services,
-                                        capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services,
-                                            overhead_labor_cost,
-                                            medicare_operating_profit_margin,
-                                            payer_mix_adjusted_profit_loss_medicare,
-                                            commercial_hospital_operating_profit_loss,
-                                            direct_patient_care_labor_cost,
-                                            hospital_operating_labor_cost,
-                                        medicaid_payer_mix_numeric,
-              direct_patient_care_labor_hours_numeric) %>%
-  na.omit()
-
-set.seed(03072025)
-
-kmean_evaluation %>% 
-  fviz_nbclust(kmeans, 
-               k.max = 20,
-               method = "wss") + 
-  geom_vline(xintercept = 13, linetype = 2)
-
-```
-Looks like an elbow at 13 and 19. 
-
-Sqrt of 1098 is about 33.14 for sqrt rule.
-
-## Kmeans with new county data combined in  
-```{r}
-kmean_evaluation <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
-                                            bed_size,
-                                            net_charity_care_cost_ten_thousand,
-                                            difference_in_discharges, 
-                                            inpatient_occupancy, 
-                                            operating_expenses,
-                                            fund_balance,
-                                            medicare_payer_mix,
-                                            hospital_expenses_inclusive_of_all_services,
-                                        capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services,
-                                            overhead_labor_cost,
-                                            medicare_operating_profit_margin,
-                                            payer_mix_adjusted_profit_loss_medicare,
-                                            commercial_hospital_operating_profit_loss,
-                                            direct_patient_care_labor_cost,
-                                            hospital_operating_labor_cost,
-                                        medicaid_payer_mix_numeric,
-              direct_patient_care_labor_hours_numeric,
-              percent_children_in_poverty,
-              percent_unemployed,
-              percent_smokers,
-              percent_excessive_drinking,
-              percent_obese,
-              percent_uninsured,
-              percent_female,
-              percent_65_and_over,
-              percent_not_proficient_in_english,
-              percent_hispanic,
-              percent_african_american,
-              household_income,
-              mentally_unhealthy_days,
-              population_y,
-              percent_rural) %>%
-  na.omit()
-
-set.seed(03162025)
-kmean_evaluation %>% 
-  fviz_nbclust(kmeans, 
-               k.max = 20,
-               nboot = 50,
-               method = "wss") + 
-  geom_vline(xintercept = 13, linetype = 2)
-
-fviz_nbclust(kmean_evaluation, kmeans, method = "silhouette")
-
-```
-
 ## Using Grid Search 
 ```{r}
 data_split <- initial_split(data = knn_numerics,
@@ -328,7 +244,9 @@ k_res %>%
   collect_predictions()
 ```
 
+Looks like an elbow at 13 and 19. 
 
+Sqrt of 1098 is about 33.14 for sqrt rule.
 
 ## Data Imputation
 
