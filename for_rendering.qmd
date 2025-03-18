@@ -234,17 +234,39 @@ k_res <- k_workflow %>%
             control = control_grid(save_pred = TRUE),
             metrics = metric_set(rmse))
 
-k_res %>%
+collected_metrics <- k_res %>%
   collect_metrics()
+
+k_res %>%
+  show_best()
 
 k_res %>%
   select_best()
 
 k_res %>%
   collect_predictions()
-```
 
-Looks like an elbow at 13 and 19. 
+k_graph_stderr <- collected_metrics %>%
+  ggplot(mapping = aes(x = neighbors,
+                       y = std_err)) + 
+  geom_line() +
+  geom_point() +
+    geom_vline(xintercept = 7, 
+             linetype = 2) +
+  theme_minimal()
+
+k_graph_mean <- collected_metrics %>%
+  ggplot(mapping = aes(x = neighbors,
+                       y = mean)) + 
+  geom_line() +
+  geom_point() +
+  geom_vline(xintercept = 5, 
+             linetype = 2) +
+  theme_minimal()
+
+k_graph_stderr + k_graph_mean
+
+```
 
 Sqrt of 1098 is about 33.14 for sqrt rule.
 
