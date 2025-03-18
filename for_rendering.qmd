@@ -268,7 +268,7 @@ k_graph_stderr + k_graph_mean
 
 ```
 
-Sqrt of 1098 is about 33.14 for sqrt rule.
+Sqrt of 1311 is about 36.21 for sqrt rule.
 
 ## Data Imputation
 
@@ -278,13 +278,56 @@ numeric_tr2 <- numeric_data
 numeric_te2 <- numeric_data
 numeric_te_whole2 <- numeric_te2
 
-rec2 <- recipe(
-  net_patient_revenue_hundred_thousand ~ bed_size + net_charity_care_cost_ten_thousand + difference_in_discharges + inpatient_occupancy + operating_expenses + fund_balance + medicare_payer_mix + hospital_expenses_inclusive_of_all_services + capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services + overhead_labor_cost + medicare_operating_profit_margin + payer_mix_adjusted_profit_loss_medicare + commercial_hospital_operating_profit_loss + direct_patient_care_labor_cost + hospital_operating_labor_cost + medicaid_payer_mix_numeric + direct_patient_care_labor_hours_numeric,
-  data = numeric_te2)
+rec2 <- numeric_te2 %>% recipe(net_patient_revenue_hundred_thousand ~ bed_size +
+                                            net_charity_care_cost_ten_thousand +
+                                            difference_in_discharges + 
+                                            inpatient_occupancy + 
+                                            operating_expenses +
+                                            fund_balance +
+                                            medicare_payer_mix +
+                                            hospital_expenses_inclusive_of_all_services +                                        capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services +
+                                            overhead_labor_cost +
+                                            medicare_operating_profit_margin +
+                                            payer_mix_adjusted_profit_loss_medicare +
+                                            commercial_hospital_operating_profit_loss +
+                                            direct_patient_care_labor_cost +
+                                            hospital_operating_labor_cost +
+                                        medicaid_payer_mix_numeric +
+              direct_patient_care_labor_hours_numeric +
+              percent_children_in_poverty +
+              percent_unemployed +
+              percent_smokers +
+              percent_excessive_drinking +
+              percent_obese +
+              percent_uninsured +
+              percent_female +
+              percent_65_and_over +
+              percent_not_proficient_in_english+
+              percent_hispanic +
+              percent_african_american +
+              household_income +
+              mentally_unhealthy_days +
+              population_y +
+              percent_rural)
 
-ratio_recipe3 <- rec2 %>%
+norm_trans <- rec2 %>%
+  step_normalize(net_patient_revenue_hundred_thousand,
+                 net_charity_care_cost_ten_thousand,
+                 operating_expenses,
+                 fund_balance,
+                 hospital_expenses_inclusive_of_all_services,
+                 capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services,
+                 overhead_labor_cost,
+                 commercial_hospital_operating_profit_loss,
+                 direct_patient_care_labor_cost,
+                 hospital_operating_labor_cost,
+                 direct_patient_care_labor_hours_numeric,
+                 household_income,
+                 population_y)
+
+ratio_recipe3 <- norm_trans %>%
   step_impute_knn(all_numeric_predictors(),
-                  neighbors = 13)
+                  neighbors = 5)
 
 ratio_rec4 <- prep(ratio_recipe3, training = numeric_tr2) 
 
@@ -303,6 +346,21 @@ name_change <- imputed2 %>% mutate(bed_size_imputed = bed_size) %>%
   mutate(inpatient_occupancy_imputed = inpatient_occupancy) %>% 
     mutate(direct_patient_care_labor_hours_numeric_imputed = direct_patient_care_labor_hours_numeric) %>%
   mutate(direct_patient_care_labor_cost_imputed = direct_patient_care_labor_cost) %>%
+  mutate(percent_children_in_poverty_imputed = percent_children_in_poverty) %>%
+  mutate(percent_unemployed_imputed = percent_unemployed) %>%
+  mutate(percent_smokers_imputed = percent_smokers) %>%
+  mutate(percent_excessive_drinking_imputed = percent_excessive_drinking) %>%
+  mutate(percent_obese_imputed = percent_obese) %>%
+  mutate(percent_uninsured_imputed = percent_uninsured) %>% 
+  mutate(percent_female_imputed = percent_female) %>%
+  mutate(percent_65_and_over_imputed = percent_65_and_over) %>%
+  mutate(percent_not_proficient_in_english_imputed = percent_not_proficient_in_english) %>%
+  mutate(percent_hispanic_imputed = percent_hispanic) %>%
+  mutate(percent_african_american_imputed = percent_african_american) %>%
+  mutate(household_income_imputed = household_income) %>%
+  mutate(mentally_unhealthy_days_imputed = mentally_unhealthy_days) %>%
+  mutate(population_y_imputed = population_y) %>%
+  mutate(percent_rural_imputed = percent_rural) %>%
   select(ends_with("imputed"))
 
 full_imputed2 <- cbind(numeric_data,
@@ -324,15 +382,30 @@ removed_omits <- full_imputed2 %>%
          medicare_payer_mix_imputed,
          inpatient_occupancy_imputed,
               direct_patient_care_labor_hours_numeric_imputed,
-              direct_patient_care_labor_cost_imputed) %>% 
+              direct_patient_care_labor_cost_imputed,
+         percent_children_in_poverty_imputed,
+         percent_unemployed_imputed,
+         percent_smokers_imputed,
+         percent_excessive_drinking_imputed,
+         percent_obese_imputed,
+         percent_uninsured_imputed,
+         percent_female_imputed,
+         percent_65_and_over_imputed,
+         percent_not_proficient_in_english_imputed,
+         percent_hispanic_imputed,
+         percent_african_american_imputed,
+         household_income_imputed,
+         mentally_unhealthy_days_imputed,
+         population_y_imputed,
+         percent_rural_imputed) %>% 
   na.omit()
 
 curious <- removed_omits %>% summarize(mean(difference_in_discharges_imputed))
-#Mean is -1.935
+#Mean is -1.171
 
-curious2 <- kmean_evaluation %>%
+curious2 <- knn_numerics %>%
   summarize(mean(difference_in_discharges))
-#Mean is -2.631
+#Mean is -2.205
 
 #sum(is.nan(full_imputed2$difference_in_discharges_imputed))
 
@@ -401,25 +474,73 @@ summary(test2)
 testglance2 <- glance(test2)
 # 2066 obs.
 
-test3 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed,
+test3 <- lm(difference_in_discharges_imputed ~ hospital_ownership_type + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed + percent_children_in_poverty_imputed +
+              percent_unemployed_imputed +
+              percent_smokers_imputed +
+              percent_excessive_drinking_imputed +
+              percent_obese_imputed +
+              percent_uninsured_imputed +
+              percent_female_imputed +
+              percent_65_and_over_imputed +
+              percent_not_proficient_in_english_imputed +
+              percent_hispanic_imputed +
+              percent_african_american_imputed +
+              household_income_imputed +
+              mentally_unhealthy_days_imputed +
+              population_y_imputed +
+              percent_rural_imputed,
+            data = removed_omits)
+
+summary(test3)
+testglance3 <- glance(test3)
+
+test4 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed +
+              percent_unemployed_imputed +
+              percent_smokers_imputed +
+              percent_excessive_drinking_imputed +
+              percent_obese_imputed +
+              percent_uninsured_imputed +
+              percent_female_imputed +
+              percent_65_and_over_imputed +
+              percent_not_proficient_in_english_imputed +
+              percent_hispanic_imputed +
+              percent_african_american_imputed +
+              household_income_imputed +
+              mentally_unhealthy_days_imputed +
+              population_y_imputed +
+              percent_rural_imputed,
     data = removed_omits,
     index = c("hospital_name.y", "year"),
     model = "within",
     effect = "individual")
 
-summary(test3)
-testglance3 <- glance(test3)
+summary(test4)
+testglance4 <- glance(test4)
 # 2066 obs.
 
-test4 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed +
-              direct_patient_care_labor_hours_numeric_imputed,
-                data = removed_omits,
+test5 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed +
+              direct_patient_care_labor_hours_numeric_imputed+
+              percent_unemployed_imputed +
+              percent_smokers_imputed +
+              percent_excessive_drinking_imputed +
+              percent_obese_imputed +
+              percent_uninsured_imputed +
+              percent_female_imputed +
+              percent_65_and_over_imputed +
+              percent_not_proficient_in_english_imputed +
+              percent_hispanic_imputed +
+              percent_african_american_imputed +
+              household_income_imputed +
+              mentally_unhealthy_days_imputed +
+              population_y_imputed +
+              percent_rural_imputed,
+              data = removed_omits,
     index = c("hospital_name.y", "year"),
     model = "within",
     effect = "twoways")
 
-summary(test4)
-testglance4 <- glance(test4)
+summary(test5)
+testglance5 <- glance(test5)
 # 2066 obs.
 ```
 
@@ -430,6 +551,7 @@ Complete_imputed_table <- stargazer(test,
           test2, 
           test3, 
           test4,
+          test5,
           type = "text",
           title = "KNN Imputed Regression Models", 
                                                report = "vcs*",
