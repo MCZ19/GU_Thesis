@@ -1,7 +1,10 @@
 ---
 title: "Add HCRIS data"
 format: html
+docx:
+  toc: TRUE
 editor: visual
+warning: FALSE
 embed-resources: true
 ---
 
