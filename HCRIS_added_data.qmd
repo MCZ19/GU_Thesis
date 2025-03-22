@@ -200,8 +200,9 @@ Fully_combined <- left_join(
 Write fully combined data set to excel as a backup and for my advisor.
 
 ```{r}
-write.xlsx(Fully_combined, 'Fully_combined_dataset.xlsx')
+write.xlsx(Fully_combined, 'Fully_combined_dataset_init.xlsx')
 ```
+Renamed this to init after it originally ended in _dataset. 
 
 ## Add Cross Sectional County Data
 ```{r}
@@ -980,7 +981,7 @@ USGS_info_NY$county <- str_trim(USGS_info_NY$county)
 
 ## Combine Fully Combined and HUD
 ```{r}
-location_plus_fully_combined <- inner_join(Fully_combined_dataset_original,
+location_plus_fully_combined <- inner_join(Fully_combined,
                                           Hud_county_zip_crosswalk,
                                           by = "zip_code")
 ```
@@ -1001,3 +1002,9 @@ Fully_combined <- left_join(Match,
                             by = c("year", "county"),
                             multiple = "all")
 ```
+
+## Save/write Combined Data set
+```{r}
+write.xlsx(Fully_combined, 'Fully_combined_dataset.xlsx')
+```
+
