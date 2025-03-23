@@ -25,6 +25,7 @@ library(readxl)
 library(broom)
 library(plm)
 library(openxlsx)
+library(gt)
 ```
 
 Load in manually cleaned data set:
@@ -62,8 +63,27 @@ Exploring cleaned NASHP data.
 ```{r}
 View(cleaned_NASHP %>% count(`Hospital Ownership Type`))
 
-for_viz <-(cleaned_NASHP %>% group_by(Year) %>% count(`Hospital Ownership Type`))
+for_viz <-(cleaned_NASHP %>% group_by(Year) %>% count(`Hospital Ownership Type`)) %>% ungroup()
 ```
+
+## Table
+
+```{r}
+gt_viz_tbl <- for_viz %>%
+    mutate(`Number of Hospitals` = n) %>% select(-n) %>%
+  gt() %>%
+  tab_header(
+    title = "Number of Hospitals by Ownership Type from 2011 to 2022"
+  ) %>%
+  tab_spanner(label = "Ownership Information",
+    columns = c(`Hospital Ownership Type`, `Number of Hospitals`)) %>%
+  tab_spanner(label = "Time",
+              columns = Year)
+
+gt_viz_tbl
+
+```
+
 
 Visualize hospital ownership count by year.
 
@@ -78,11 +98,19 @@ Trying to do a percent bar chart. Not successful yet.
 for_viz %>% ggplot(mapping = aes(x = `Hospital Ownership Type`, fill = Year, y = n)) + geom_bar(position = "fill", stat = "identity") +   scale_color_gradient2(low = "blue", high = "orange") 
 ```
 
-\*Grouped line chart.
+## Grouped line chart.
 
 ```{r}
-for_viz %>% ggplot(mapping = aes(x = Year, group = `Hospital Ownership Type`, y = n, color = `Hospital Ownership Type`)) +
-  geom_line() + scale_y_continuous(breaks = seq(0, 175, by = 25)) + theme_minimal()
+for_viz %>%
+  ggplot(mapping = aes(x = Year, group = `Hospital Ownership Type`, y = n, color = `Hospital Ownership Type`)) +
+  geom_line() +
+  scale_y_continuous(breaks = seq(0, 175, by = 25)) +
+  scale_x_continuous(breaks = c(2012, 2014, 2016, 2018, 2020, 2022)) +
+  labs(title = "Number of Hospitals in New York State from 2011 to 2022",
+       subtitle = "There are a small number of For-Profit Hospitals in New York State") +
+  xlab("Year") +
+  ylab("Number of Hospitals") +
+  theme_minimal()
 
 ```
 
