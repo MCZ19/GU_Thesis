@@ -52,11 +52,42 @@ numeric_data <- Fully_combined_dataset %>%
   mutate(year = as.factor(year)) %>%
   mutate(medicaid_payer_mix_numeric = as.numeric(medicaid_payer_mix)) %>%
   mutate(direct_patient_care_labor_hours_numeric = as.numeric(direct_patient_care_labor_hours)) %>%
-  filter(!hospital_ownership_type == "For-Profit")
+  filter(!hospital_ownership_type == "For-Profit") %>%
+  mutate(percent_children_in_poverty = percent_children_in_poverty/100) %>%
+  mutate(percent_unemployed = percent_unemployed/100) %>%
+  mutate(percent_smokers = percent_smokers/100) %>%
+  mutate(percent_excessive_drinking = percent_excessive_drinking/100) %>%
+  mutate(percent_obese = percent_obese/100) %>%
+  mutate(percent_uninsured = percent_uninsured/100) %>%
+  mutate(percent_female = percent_female/100) %>%
+  mutate(percent_65_and_over = percent_65_and_over/100) %>%
+  mutate(percent_not_proficient_in_english = percent_not_proficient_in_english/100) %>%
+  mutate(percent_hispanic = percent_hispanic/100) %>%
+  mutate(percent_african_american = percent_african_american/100) %>%
+  mutate(percent_rural = percent_rural/100)
   
+`Non-Profit` <- if_else(numeric_data$hospital_ownership_type == 'Non-Profit', 1, 0)
+
+Governmental <- if_else(numeric_data$hospital_ownership_type == 'Governmental', 1, 0)
+
+numeric_data <- tibble(numeric_data,
+                       `Non-Profit`,
+                       Governmental)
 ```
 
 Create dataset with different variable classes and rescaled for certain variables. Dropped for-profit hospitals. 
+
+## Visualize dependant/independant relationship by year
+
+```{r}
+numeric_data %>%
+  ggplot(mapping = aes(y = difference_in_discharges,
+                       x = hospital_ownership_type)) +
+  geom_point() + 
+  facet_wrap(vars(year))
+```
+
+
 
 ## Understanding data missingness
 
@@ -152,6 +183,57 @@ var.test(numeric_data$direct_patient_care_labor_hours_numeric,
 
 ```
 Consider looking at Bartlett.test for bed/occupancy/labor variances. 
+
+## GT Table for Numeric Data
+```{r}
+num_for_gt <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
+                                            bed_size,
+                                            net_charity_care_cost_ten_thousand,
+                                            difference_in_discharges, 
+                                            inpatient_occupancy, 
+                                            operating_expenses,
+                                            fund_balance,
+                                            medicare_payer_mix,
+                                            hospital_expenses_inclusive_of_all_services,
+                                        capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services,
+                                            overhead_labor_cost,
+                                            medicare_operating_profit_margin,
+                                            payer_mix_adjusted_profit_loss_medicare,
+                                            commercial_hospital_operating_profit_loss,
+                                            direct_patient_care_labor_cost,
+                                            hospital_operating_labor_cost,
+                                        medicaid_payer_mix_numeric,
+              direct_patient_care_labor_hours_numeric,
+              percent_children_in_poverty,
+              percent_unemployed,
+              percent_smokers,
+              percent_excessive_drinking,
+              percent_obese,
+              percent_uninsured,
+              percent_female,
+              percent_65_and_over,
+              percent_not_proficient_in_english,
+              percent_hispanic,
+              percent_african_american,
+              household_income,
+              mentally_unhealthy_days,
+              population_y,
+              percent_rural) %>%
+  na.omit()
+
+data_for_gt <- num_for_gt %>% summarise(across(c(net_patient_revenue_hundred_thousand:percent_rural),
+                                list(min = min, max = max, var = var, mean = mean, median = median, sd = sd),
+                                .names = "{.col}.{.fn}"))
+
+large_gt <- data_for_gt %>%
+  gt() %>%
+  tab_spanner(label = "Percentages",
+              columns = c("inpatient_occupancy", "medicare_payer_mix",
+                          "capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services",
+                          "medicare_operating_profit_margin", "payer_mix_adjusted_profit_loss_medicare",
+                          "medicaid_payer_mix_numeric"))
+```
+
 
 ## Creating new data frame only on what I'm evaluating
 ```{r}
