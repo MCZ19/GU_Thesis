@@ -51,11 +51,12 @@ numeric_data <- Fully_combined_dataset %>%
   mutate(net_charity_care_cost_ten_thousand = net_charity_care_cost/10000) %>%
   mutate(year = as.factor(year)) %>%
   mutate(medicaid_payer_mix_numeric = as.numeric(medicaid_payer_mix)) %>%
-  mutate(direct_patient_care_labor_hours_numeric = as.numeric(direct_patient_care_labor_hours))
+  mutate(direct_patient_care_labor_hours_numeric = as.numeric(direct_patient_care_labor_hours)) %>%
+  filter(!hospital_ownership_type == "For-Profit")
   
 ```
 
-Create dataset with different variable classes and rescaled for certain variables.
+Create dataset with different variable classes and rescaled for certain variables. Dropped for-profit hospitals. 
 
 ## Understanding data missingness
 
@@ -108,6 +109,10 @@ View(numeric_data %>% group_by(hospital_name.y) %>%
               inpatient_occupancy,
               direct_patient_care_labor_hours_numeric,
               direct_patient_care_labor_cost))
+
+# try using across function 
+
+
 
 
 ```
@@ -237,7 +242,7 @@ k_res <- k_workflow %>%
 collected_metrics <- k_res %>%
   collect_metrics()
 
-k_res %>%
+knn_show_best <- k_res %>%
   show_best()
 
 k_res %>%
@@ -251,8 +256,11 @@ k_graph_stderr <- collected_metrics %>%
                        y = std_err)) + 
   geom_line() +
   geom_point() +
-    geom_vline(xintercept = 7, 
+    geom_vline(xintercept = 3, 
              linetype = 2) +
+  labs(title = "Evaluating KNN Based on Standard Error") +
+  xlab("Number of Neighbors") +
+  ylab("Standard Error") +
   theme_minimal()
 
 k_graph_mean <- collected_metrics %>%
@@ -262,9 +270,29 @@ k_graph_mean <- collected_metrics %>%
   geom_point() +
   geom_vline(xintercept = 5, 
              linetype = 2) +
-  theme_minimal()
+  labs(title = "Evaluating KNN based on Mean") +
+  xlab("Number of Neighbors") +
+  ylab("Mean") +
+    theme_minimal()
 
 k_graph_stderr + k_graph_mean
+
+gt_knn_show_best <- knn_show_best %>%
+  select(!.config) %>% 
+  mutate(KNN = neighbors) %>%
+  mutate(Metric = .metric) %>%
+  mutate(Estimator = .estimator) %>%
+  mutate(Number = n) %>%
+  mutate(`Standard Error` = std_err) %>% 
+  mutate(Mean = mean) %>%
+  select(-std_err, -n, -.estimator, -.metric, -neighbors, -mean) %>%
+  gt() %>%
+  tab_header(title = "Best KNN Predictions",
+             subtitle = "Based on Grid Search") %>%
+  tab_spanner(label = "Measures",
+              columns = c("Standard Error",
+                          "Mean"))
+  
 
 ```
 
@@ -856,9 +884,27 @@ ggplot(data = Fully_combined_dataset,
 
 ```{r}
 ggplot(data = Fully_combined_dataset,
-       mapping = aes(x = difference_in_discharges, group = hospital_ownership_type, fill = hospital_ownership_type)) + geom_density(alpha =0.6) + theme_minimal()
+       mapping = aes(x = difference_in_discharges,
+                     group = hospital_ownership_type, 
+                     fill = hospital_ownership_type)) + 
+  geom_density(alpha =0.6) + 
+  labs(title = "Distribution of PPCs in Terms of Hospital Ownership") +
+  xlab("Observed vs. Expected PPCs") +
+  ylab("Density") +
+  guides(fill = guide_legend(title = "Hospital Ownership Type")) +
+  theme_minimal()
 ```
 
+
+## GT Table
+
+```{r}
+
+```
+
+
+
+-------------------
 From Williams
 
 \#' Create a regression table with clustered standard errors and drop the\
