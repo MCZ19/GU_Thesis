@@ -31,6 +31,7 @@ library(estimatr)
 library(tidymodels)
 library(factoextra)
 library(cluster)
+library(gtsummary)
 ```
 
 ## Load Cleaned Data
@@ -160,29 +161,6 @@ Percent of missing observations.
 -Direct Patient Care Labor Hours is .1286 or 270 obs. 
 -Direct Patient Care Labor Cost is .1272 or 267 obs. 
 
-## F-tests between certain variables
-```{r}
-
-var.test(numeric_data$bed_size, 
-          numeric_data$inpatient_occupancy, 
-          alternative = "two.sided")
-#p value is 2.2e-16. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
-
-var.test(numeric_data$net_charity_care_cost_ten_thousand,
-         numeric_data$medicaid_payer_mix_numeric)
-#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
-var.test(numeric_data$bed_size,
-         numeric_data$direct_patient_care_labor_hours_numeric)
-#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
-var.test(numeric_data$direct_patient_care_labor_hours_numeric,
-         numeric_data$inpatient_occupancy)
-#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
-var.test(numeric_data$direct_patient_care_labor_hours_numeric,
-         numeric_data$direct_patient_care_labor_cost)
-#p value is 2.2e-16. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
-
-```
-Consider looking at Bartlett.test for bed/occupancy/labor variances. 
 
 ## GT Table for Numeric Data
 ```{r}
@@ -226,6 +204,10 @@ data_for_gt <- num_for_gt %>% summarise(across(c(net_patient_revenue_hundred_tho
                                 .names = "{.col}.{.fn}"))
 
 large_gt <- data_for_gt %>%
+  tbl_summary()
+  
+  
+  
   gt() %>%
   tab_spanner(label = "Percentages",
               columns = c("inpatient_occupancy", "medicare_payer_mix",
@@ -269,7 +251,8 @@ knn_numerics <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
               household_income,
               mentally_unhealthy_days,
               population_y,
-              percent_rural) %>% 
+              percent_rural,
+              `Non-Profit`) %>% 
   na.omit()
 ```
 
@@ -418,7 +401,8 @@ rec2 <- numeric_te2 %>% recipe(net_patient_revenue_hundred_thousand ~ bed_size +
               household_income +
               mentally_unhealthy_days +
               population_y +
-              percent_rural)
+              percent_rural +
+              `Non-Profit`)
 
 norm_trans <- rec2 %>%
   step_normalize(net_patient_revenue_hundred_thousand,
@@ -471,6 +455,7 @@ name_change <- imputed2 %>% mutate(bed_size_imputed = bed_size) %>%
   mutate(mentally_unhealthy_days_imputed = mentally_unhealthy_days) %>%
   mutate(population_y_imputed = population_y) %>%
   mutate(percent_rural_imputed = percent_rural) %>%
+  mutate(`Non-Profit_imputed` = `Non-Profit`) %>%
   select(ends_with("imputed"))
 
 full_imputed2 <- cbind(numeric_data,
@@ -507,7 +492,8 @@ removed_omits <- full_imputed2 %>%
          household_income_imputed,
          mentally_unhealthy_days_imputed,
          population_y_imputed,
-         percent_rural_imputed) %>% 
+         percent_rural_imputed,
+         `Non-Profit_imputed`) %>% 
   na.omit()
 
 curious <- removed_omits %>% summarize(mean(difference_in_discharges_imputed))
@@ -568,23 +554,48 @@ Ideally would do all numeric predictors but that was taking forever.
 
 medicaid_payer_mix is classified as a factor as is adjusted patient discharges and direct patient care fte per 1000 adjusted discharges.
 
+
+## F-tests between certain variables
+```{r}
+
+var.test(removed_omits$bed_size_imputed, 
+          removed_omits$inpatient_occupancy_imputed, 
+          alternative = "two.sided")
+#p value is 2.2e-16. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+
+var.test(removed_omits$net_charity_care_cost_ten_thousand_imputed,
+         removed_omits$medicaid_payer_mix_numeric_imputed)
+#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+var.test(removed_omits$bed_size_imputed,
+         removed_omits$direct_patient_care_labor_hours_numeric_imputed)
+#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+var.test(removed_omits$direct_patient_care_labor_hours_numeric_imputed,
+         removed_omits$inpatient_occupancy_imputed)
+#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+var.test(removed_omits$direct_patient_care_labor_hours_numeric_imputed,
+         removed_omits$direct_patient_care_labor_cost_imputed)
+#p value is .989. As the p-value is more than .05 we do not reject the null hypothesis that the populations are equal. 
+
+```
+Consider looking at Bartlett.test for bed/occupancy/labor variances. 
+
 ## Imputed Regression Results
 
 ```{r}
-test <- lm(difference_in_discharges_imputed ~ hospital_ownership_type, data = removed_omits)
+test <- lm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed`, data = removed_omits)
 
 summary(test)
 testglance <- glance(test)
 #now 2066
 
-test2 <- lm(difference_in_discharges_imputed ~ hospital_ownership_type + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed,
+test2 <- lm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed,
             data = removed_omits)  
 
 summary(test2)
 testglance2 <- glance(test2)
 # 2066 obs.
 
-test3 <- lm(difference_in_discharges_imputed ~ hospital_ownership_type + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed + percent_children_in_poverty_imputed +
+test3 <- lm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed + percent_children_in_poverty_imputed +
               percent_unemployed_imputed +
               percent_smokers_imputed +
               percent_excessive_drinking_imputed +
@@ -604,7 +615,8 @@ test3 <- lm(difference_in_discharges_imputed ~ hospital_ownership_type + bed_siz
 summary(test3)
 testglance3 <- glance(test3)
 
-test4 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed +
+test4 <- plm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed +
+              percent_children_in_poverty_imputed +
               percent_unemployed_imputed +
               percent_smokers_imputed +
               percent_excessive_drinking_imputed +
@@ -628,8 +640,9 @@ summary(test4)
 testglance4 <- glance(test4)
 # 2066 obs.
 
-test5 <- plm(difference_in_discharges_imputed ~ hospital_ownership_type + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed +
+test5 <- plm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed +
               direct_patient_care_labor_hours_numeric_imputed+
+              percent_children_in_poverty_imputed +
               percent_unemployed_imputed +
               percent_smokers_imputed +
               percent_excessive_drinking_imputed +
@@ -667,8 +680,7 @@ Complete_imputed_table <- stargazer(test,
                                                report = "vcs*",
                                                single.row = TRUE,
                                                digits = 3,
-                                               covariate.labels = c("Governmental Hospitals",
-                                                                    "Non-Profit Hospitals", "Number of Beds",
+                                               covariate.labels = c("Non-Profit Hospitals", "Number of Beds",
                                                                     "Net Patient Revenue (Hundreds of Thousands of Dollars)",
                                                                     "Net Charity Care Costs (Tens of Thousands of Dollars",
                                                                     "Medicare Payer Mix",
