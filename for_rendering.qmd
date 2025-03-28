@@ -49,7 +49,7 @@ numeric_data <- Fully_combined_dataset %>%
   transform(net_patient_revenue = as.numeric(net_patient_revenue)) %>%
   transform(net_charity_care_cost = as.numeric(net_charity_care_cost)) %>%
   mutate(net_patient_revenue_hundred_thousand = net_patient_revenue/100000) %>%
-  mutate(net_charity_care_cost_ten_thousand = net_charity_care_cost/10000) %>%
+  mutate(net_charity_care_cost_hundred_thousand = net_charity_care_cost/100000) %>%
   mutate(year = as.factor(year)) %>%
   mutate(medicaid_payer_mix_numeric = as.numeric(medicaid_payer_mix)) %>%
   mutate(direct_patient_care_labor_hours_numeric = as.numeric(direct_patient_care_labor_hours)) %>%
@@ -166,7 +166,7 @@ Percent of missing observations.
 ```{r}
 num_for_gt <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
                                             bed_size,
-                                            net_charity_care_cost_ten_thousand,
+                                            net_charity_care_cost_hundred_thousand,
                                             difference_in_discharges, 
                                             inpatient_occupancy, 
                                             medicare_payer_mix,
@@ -207,7 +207,7 @@ desc_stats <- num_for_gt %>%
 digits = all_continuous() ~ 3,
 label = list(net_patient_revenue_hundred_thousand ~ "Net Patient Revenue in Hundreds of Thousands of Dollars",
              bed_size ~ "Number of Hospital Beds",
-net_charity_care_cost_ten_thousand ~ "Net Charity Care Costs in Tens of Thousands of Dollars",
+net_charity_care_cost_hundred_thousand ~ "Net Charity Care Costs in Hundreds of Thousands of Dollars",
 difference_in_discharges ~ "Expected vs. Observed PPCs",
 inpatient_occupancy ~ "Percent of Occupied Hospital Beds",
 medicare_payer_mix ~ "Medicare Payer Mix",
@@ -233,7 +233,9 @@ percent_rural ~ "Percent of County Considered Rural",
   add_n() %>%
   modify_header(label ~ "**Variable**",
                 stat_0 ~ "**Statistics**") %>%
-  modify_spanning_header(~ "**Descriptive Statistics**")
+  modify_spanning_header(~ "**Descriptive Statistics**") %>%
+  as_gt() %>%
+  gt::gtsave("Descriptive_Stats01.png")
 
 
 
@@ -264,7 +266,7 @@ large_gt <- data_for_gt %>%
 ```{r}
 knn_numerics <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
                                             bed_size,
-                                            net_charity_care_cost_ten_thousand,
+                                            net_charity_care_cost_hundred_thousand,
                                             difference_in_discharges, 
                                             inpatient_occupancy, 
                                             operating_expenses,
@@ -315,7 +317,7 @@ data_test <- testing(x = data_split)
 k_recipe <- recipe(formula = difference_in_discharges ~ .,
                    data = data_train) %>%
   step_normalize(net_patient_revenue_hundred_thousand,
-                 net_charity_care_cost_ten_thousand,
+                 net_charity_care_cost_hundred_thousand,
                  operating_expenses,
                  fund_balance,
                  hospital_expenses_inclusive_of_all_services,
@@ -418,7 +420,7 @@ numeric_te2 <- numeric_data
 numeric_te_whole2 <- numeric_te2
 
 rec2 <- numeric_te2 %>% recipe(net_patient_revenue_hundred_thousand ~ bed_size +
-                                            net_charity_care_cost_ten_thousand +
+                                            net_charity_care_cost_hundred_thousand +
                                             difference_in_discharges + 
                                             inpatient_occupancy + 
                                             operating_expenses +
@@ -452,7 +454,7 @@ rec2 <- numeric_te2 %>% recipe(net_patient_revenue_hundred_thousand ~ bed_size +
 
 norm_trans <- rec2 %>%
   step_normalize(net_patient_revenue_hundred_thousand,
-                 net_charity_care_cost_ten_thousand,
+                 net_charity_care_cost_hundred_thousand,
                  operating_expenses,
                  fund_balance,
                  hospital_expenses_inclusive_of_all_services,
@@ -480,7 +482,7 @@ summary(imputed2)
 #reduced to 33
 
 name_change <- imputed2 %>% mutate(bed_size_imputed = bed_size) %>%
-  mutate(difference_in_discharges_imputed = difference_in_discharges) %>% mutate(net_charity_care_cost_ten_thousand_imputed = net_charity_care_cost_ten_thousand) %>% mutate(net_patient_revenue_hundred_thousand_imputed = net_patient_revenue_hundred_thousand) %>%
+  mutate(difference_in_discharges_imputed = difference_in_discharges) %>% mutate(net_charity_care_cost_hundred_thousand_imputed = net_charity_care_cost_hundred_thousand) %>% mutate(net_patient_revenue_hundred_thousand_imputed = net_patient_revenue_hundred_thousand) %>%
   mutate(medicaid_payer_mix_numeric_imputed = medicaid_payer_mix_numeric) %>%
   mutate(medicare_payer_mix_imputed = medicare_payer_mix) %>%
   mutate(inpatient_occupancy_imputed = inpatient_occupancy) %>% 
@@ -514,7 +516,7 @@ View(glance(full_imputed2))
 removed_omits <- full_imputed2 %>%
   select(bed_size_imputed,
                    difference_in_discharges_imputed,
-                   net_charity_care_cost_ten_thousand_imputed,
+                   net_charity_care_cost_hundred_thousand_imputed,
                    net_patient_revenue_hundred_thousand_imputed,
                    hospital_ownership_type,
          year,
@@ -634,14 +636,15 @@ summary(test)
 testglance <- glance(test)
 #now 2066
 
-test2 <- lm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed,
+test2 <- lm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_hundred_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed,
             data = removed_omits)  
 
 summary(test2)
+tidy(test2)
 testglance2 <- glance(test2)
 # 2066 obs.
 
-test3 <- lm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed + percent_children_in_poverty_imputed +
+test3 <- lm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_hundred_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed + percent_children_in_poverty_imputed +
               percent_unemployed_imputed +
               percent_smokers_imputed +
               percent_excessive_drinking_imputed +
@@ -659,9 +662,10 @@ test3 <- lm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed
             data = removed_omits)
 
 summary(test3)
+tidy(test3)
 testglance3 <- glance(test3)
 
-test4 <- plm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed +
+test4 <- plm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_hundred_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed + direct_patient_care_labor_hours_numeric_imputed +
               percent_children_in_poverty_imputed +
               percent_unemployed_imputed +
               percent_smokers_imputed +
@@ -683,10 +687,11 @@ test4 <- plm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_impute
     effect = "individual")
 
 summary(test4)
+tidy(test4)
 testglance4 <- glance(test4)
 # 2066 obs.
 
-test5 <- plm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_ten_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed +
+test5 <- plm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed` + year + hospital_name.y + bed_size_imputed + net_patient_revenue_hundred_thousand_imputed + net_charity_care_cost_hundred_thousand_imputed + medicare_payer_mix_imputed + medicaid_payer_mix_numeric_imputed + inpatient_occupancy_imputed +
               direct_patient_care_labor_hours_numeric_imputed+
               percent_children_in_poverty_imputed +
               percent_unemployed_imputed +
@@ -726,9 +731,9 @@ Complete_imputed_table <- stargazer(test,
                                                report = "vcs*",
                                                single.row = TRUE,
                                                digits = 3,
-                                               covariate.labels = c("Non-Profit Hospitals", "Number of Beds",
+                                               covariate.labels = c("Non-Profit Hospitals vs. Government Hospitals", "Number of Beds",
                                                                     "Net Patient Revenue (Hundreds of Thousands of Dollars)",
-                                                                    "Net Charity Care Costs (Tens of Thousands of Dollars",
+                                                                    "Net Charity Care Costs (Hundreds of Thousands of Dollars)",
                                                                     "Medicare Payer Mix",
                                                                     "Medicaid Payer Mix", 
                                                                     "Percent of Beds Occupied",
@@ -749,10 +754,14 @@ Complete_imputed_table <- stargazer(test,
                                                                     "Avg. Mentally Unhealthy Days",
                                                                     "Total Population",
                                                                     "Percent Rural"), 
-                                               column.labels = c("Simple Linear", "Linear with Hospital Controls", "Linear with Hospital and County Controls", "Hospital Fixed Effects", "Two Way Fixed Effects"),
+                                               column.labels = c("Simple Linear", "Linear with Hospital Controls", "Linear with Hospital and County Controls", "Hospital Fixed Effects", "Hospital and Time Fixed Effects"),
                                                omit.stat = c("f","ser","rsq"),
                                                se_type = "HC1",
-                                               dep.var.labels = "Observed vs. Expected PPCs")
+                                               dep.var.labels = "Observed vs. Expected PPCs",
+          notes = "No Weighting Required or Used.",
+          add.lines = list(c('Fixed Effects', 'No',
+                             'No', 'No', 'Yes', 'Yes')),
+          out = "KNN_Imputed_Regressions_March.htm")
 ```
 
 Maybe do an f test between medicaid and charity care costs. 
@@ -1029,16 +1038,88 @@ ggplot(data = Fully_combined_dataset,
                      fill = hospital_ownership_type)) + 
   geom_density(alpha =0.6) + 
   labs(title = "Distribution of PPCs in Terms of Hospital Ownership") +
-  xlab("Observed vs. Expected PPCs") +
+  xlab("Expected vs. Observed PPCs") +
   ylab("Density") +
   guides(fill = guide_legend(title = "Hospital Ownership Type")) +
   theme_minimal()
 ```
 
 
-## GT Table
+## Correlogram
 
 ```{r}
+correlogram <- removed_omits %>% 
+  mutate(`Smokers`= percent_smokers_imputed) %>%
+  mutate(`Child Poverty` = percent_children_in_poverty_imputed) %>%
+  mutate(`Unemployed` = percent_unemployed_imputed) %>%
+  mutate(`Excess Drinkers` = percent_excessive_drinking_imputed) %>%
+  mutate(`Obese` = percent_obese_imputed) %>%
+  mutate(`Uninsured` = percent_uninsured_imputed) %>%
+  mutate(`Female` = percent_female_imputed) %>%
+  mutate(`Over 65` = percent_65_and_over_imputed) %>%
+  mutate(`Non-English Speaker` = percent_not_proficient_in_english_imputed) %>%
+  mutate(`Hispanic` = percent_hispanic_imputed) %>%
+  mutate(`Black` = percent_african_american_imputed) %>%
+  mutate(`Rural` = percent_rural_imputed) %>%
+  mutate(`net revenue` = net_patient_revenue_hundred_thousand_imputed) %>%
+  mutate(`Charity Care Cost` = net_charity_care_cost_ten_thousand_imputed) %>%
+  mutate(population = population_y_imputed) %>%
+  mutate(`Beds Occupied` = bed_size_imputed)  %>%
+  mutate(household_income = household_income_imputed) %>%
+  mutate(`Observed vs. Expected PPCs` = difference_in_discharges_imputed) %>%
+  select(-year,
+         -hospital_name.y,
+         -hospital_ownership_type,
+         -percent_smokers_imputed,
+         -percent_children_in_poverty_imputed,
+         -percent_unemployed_imputed,
+         -percent_excessive_drinking_imputed,
+         -percent_obese_imputed,
+         -percent_uninsured_imputed,
+         -percent_female_imputed,
+         -percent_65_and_over_imputed,
+         -percent_not_proficient_in_english_imputed,
+         -percent_hispanic_imputed,
+         -percent_african_american_imputed,
+         -percent_rural_imputed,
+         -net_charity_care_cost_ten_thousand_imputed,
+         -net_patient_revenue_hundred_thousand_imputed,
+         -population_y_imputed,
+         -bed_size_imputed,
+         -difference_in_discharges_imputed,
+         -household_income_imputed) 
+
+ggcorr(correlogram,
+       label = TRUE,
+       layout.exp = 3)
+
+
+
+
+("Non-Profit Hospitals", "Number of Beds",
+                                                                    "Net Patient Revenue (Hundreds of Thousands of Dollars)",
+                                                                    "Net Charity Care Costs (Tens of Thousands of Dollars",
+                                                                    "Medicare Payer Mix",
+                                                                    "Medicaid Payer Mix", 
+                                                                    "Percent of Beds Occupied",
+                                                                    "Total Number of Direct Care Hours per Hospital",
+                                                                    "Percent of Children in Poverty",
+                                                                    "Percent Unemployed",
+                                                                    "Percent Smokers",
+                                                                    "Percent Excessive Drinkers",
+                                                                    
+                                                                    "Percent Obese",
+                                                                    "Percent Uninsured",
+                                                                    "Percent Female",
+                                                                    "Percent 65 and Older",
+                                                                    "Percent non-English Proficient",
+                                                                    "Percent Hispanic",
+                                                                    "Percent African American",
+                                                                    "Avg. Household Income",
+                                                                    "Avg. Mentally Unhealthy Days",
+                                                                    "Total Population",
+                                                                    "Percent Rural")
+
 
 ```
 
