@@ -65,7 +65,8 @@ numeric_data <- Fully_combined_dataset %>%
   mutate(percent_not_proficient_in_english = percent_not_proficient_in_english/100) %>%
   mutate(percent_hispanic = percent_hispanic/100) %>%
   mutate(percent_african_american = percent_african_american/100) %>%
-  mutate(percent_rural = percent_rural/100)
+  mutate(percent_rural = percent_rural/100) %>%
+  mutate(hospital_operating_labor_cost_hundred_thousand = hospital_operating_labor_cost/100000)
   
 `Non-Profit` <- if_else(numeric_data$hospital_ownership_type == 'Non-Profit', 1, 0)
 
@@ -170,7 +171,7 @@ num_for_gt <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
                                             difference_in_discharges, 
                                             inpatient_occupancy, 
                                             medicare_payer_mix,
-                                            hospital_operating_labor_cost,
+                                            hospital_operating_labor_cost_hundred_thousand,
                                         medicaid_payer_mix_numeric,
               direct_patient_care_labor_hours_numeric,
               percent_children_in_poverty,
@@ -204,14 +205,14 @@ desc_stats <- num_for_gt %>%
   tbl_summary(statistic = all_continuous() ~ "Min: {min} - Max: ({max}) -
               Var: {var} - Mean: ({mean}) - Median: {median} - Sd: ({sd})"
               ,
-digits = all_continuous() ~ 3,
+digits = all_continuous() ~ 2,
 label = list(net_patient_revenue_hundred_thousand ~ "Net Patient Revenue in Hundreds of Thousands of Dollars",
              bed_size ~ "Number of Hospital Beds",
 net_charity_care_cost_hundred_thousand ~ "Net Charity Care Costs in Hundreds of Thousands of Dollars",
 difference_in_discharges ~ "Expected vs. Observed PPCs",
 inpatient_occupancy ~ "Percent of Occupied Hospital Beds",
 medicare_payer_mix ~ "Medicare Payer Mix",
-hospital_operating_labor_cost ~ "Hospital Operating Labor Cost",
+hospital_operating_labor_cost_hundred_thousand ~ "Hospital Operating Labor Cost",
 medicaid_payer_mix_numeric ~ "Medicaid Payer Mix",
 direct_patient_care_labor_hours_numeric ~ "Direct Patient Care Hours",
 percent_children_in_poverty ~ "Percent of Children in Poverty in the County",
@@ -234,8 +235,7 @@ percent_rural ~ "Percent of County Considered Rural",
   modify_header(label ~ "**Variable**",
                 stat_0 ~ "**Statistics**") %>%
   modify_spanning_header(~ "**Descriptive Statistics**") %>%
-  as_gt() %>%
-  gt::gtsave("Descriptive_Stats01.png")
+  as_gt() %>% gt::gtsave("Descriptive_Stats01.png")
 
 
 
@@ -279,7 +279,7 @@ knn_numerics <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
                                             payer_mix_adjusted_profit_loss_medicare,
                                             commercial_hospital_operating_profit_loss,
                                             direct_patient_care_labor_cost,
-                                            hospital_operating_labor_cost,
+                                            hospital_operating_labor_cost_hundred_thousand,
                                         medicaid_payer_mix_numeric,
               direct_patient_care_labor_hours_numeric,
               percent_children_in_poverty,
@@ -325,7 +325,7 @@ k_recipe <- recipe(formula = difference_in_discharges ~ .,
                  overhead_labor_cost,
                  commercial_hospital_operating_profit_loss,
                  direct_patient_care_labor_cost,
-                 hospital_operating_labor_cost,
+                 hospital_operating_labor_cost_hundred_thousand,
                  direct_patient_care_labor_hours_numeric,
                  household_income,
                  population_y)
@@ -369,7 +369,7 @@ k_graph_stderr <- collected_metrics %>%
                        y = std_err)) + 
   geom_line() +
   geom_point() +
-    geom_vline(xintercept = 3, 
+    geom_vline(xintercept = 15, 
              linetype = 2) +
   labs(title = "Evaluating KNN Based on Standard Error") +
   xlab("Number of Neighbors") +
@@ -432,7 +432,7 @@ rec2 <- numeric_te2 %>% recipe(net_patient_revenue_hundred_thousand ~ bed_size +
                                             payer_mix_adjusted_profit_loss_medicare +
                                             commercial_hospital_operating_profit_loss +
                                             direct_patient_care_labor_cost +
-                                            hospital_operating_labor_cost +
+                                            hospital_operating_labor_cost_hundred_thousand +
                                         medicaid_payer_mix_numeric +
               direct_patient_care_labor_hours_numeric +
               percent_children_in_poverty +
@@ -462,7 +462,7 @@ norm_trans <- rec2 %>%
                  overhead_labor_cost,
                  commercial_hospital_operating_profit_loss,
                  direct_patient_care_labor_cost,
-                 hospital_operating_labor_cost,
+                 hospital_operating_labor_cost_hundred_thousand,
                  direct_patient_care_labor_hours_numeric,
                  household_income,
                  population_y)
@@ -583,16 +583,16 @@ imp_graph_2 <- removed_omits %>%
                        x = bed_size_imputed)) +
   geom_point(alpha = 0.4, shape = 16, color = "skyblue") + 
   theme_minimal() + labs(title = "Graph using imputed data",
-                         y = "Difference in Discharges Imputed",
-                         x = "Bed Size Imputed")
+                         y = "Observed vs. Expected PPCs Imputed",
+                         x = "Number of Beds Imputed")
 
 ori_graph_2 <- numeric_data %>%
   ggplot(mapping = aes(y = difference_in_discharges,
                        x = bed_size)) +
   geom_point(alpha = 0.4, shape = 16, color = "red3") + 
   theme_minimal() + labs(title = "Graph using initial data",
-                         y = "Difference in Discharges",
-                         x = "Bed Size")
+                         y = "Observed vs. Expected PPCs",
+                         x = "Number of Beds")
 
 imp_graph_2 + ori_graph_2
 
@@ -688,6 +688,7 @@ test4 <- plm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_impute
 
 summary(test4)
 tidy(test4)
+fixef(test4)
 testglance4 <- glance(test4)
 # 2066 obs.
 
@@ -714,6 +715,7 @@ test5 <- plm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_impute
     effect = "twoways")
 
 summary(test5)
+fixef(test5)
 testglance5 <- glance(test5)
 # 2066 obs.
 ```
@@ -726,12 +728,12 @@ Complete_imputed_table <- stargazer(test,
           test3, 
           test4,
           test5,
-          type = "text",
+          type = "html",
           title = "KNN Imputed Regression Models", 
                                                report = "vcs*",
                                                single.row = TRUE,
                                                digits = 3,
-                                               covariate.labels = c("Non-Profit Hospitals vs. Government Hospitals", "Number of Beds",
+                                               covariate.labels = c("Non-Profit Hospitals with Reference Government Hospitals", "Number of Beds",
                                                                     "Net Patient Revenue (Hundreds of Thousands of Dollars)",
                                                                     "Net Charity Care Costs (Hundreds of Thousands of Dollars)",
                                                                     "Medicare Payer Mix",
@@ -751,8 +753,8 @@ Complete_imputed_table <- stargazer(test,
                                                                     "Percent Hispanic",
                                                                     "Percent African American",
                                                                     "Avg. Household Income",
-                                                                    "Avg. Mentally Unhealthy Days",
-                                                                    "Total Population",
+                                                                    "Avg. Mentally Unhealthy Days per Month",
+                                                                    "Total Population by County",
                                                                     "Percent Rural"), 
                                                column.labels = c("Simple Linear", "Linear with Hospital Controls", "Linear with Hospital and County Controls", "Hospital Fixed Effects", "Hospital and Time Fixed Effects"),
                                                omit.stat = c("f","ser","rsq"),
