@@ -268,6 +268,7 @@ knn_numerics <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
                                             bed_size,
                                             net_charity_care_cost_hundred_thousand,
                                             difference_in_discharges, 
+                                            hospital_ownership_type,
                                             inpatient_occupancy, 
                                             operating_expenses,
                                             fund_balance,
@@ -305,7 +306,7 @@ knn_numerics <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
 ## Using Grid Search 
 ```{r}
 
-set.seed(03242025)
+set.seed(04092026)
 
 data_split <- initial_split(data = knn_numerics,
                             prop = .80)
@@ -369,7 +370,7 @@ k_graph_stderr <- collected_metrics %>%
                        y = std_err)) + 
   geom_line() +
   geom_point() +
-    geom_vline(xintercept = 15, 
+    geom_vline(xintercept = 9, 
              linetype = 2) +
   labs(title = "Evaluating KNN Based on Standard Error") +
   xlab("Number of Neighbors") +
@@ -414,12 +415,15 @@ Sqrt of 1311 is about 36.21 for sqrt rule.
 ## Data Imputation
 
 ```{r}
+numeric_data$hospital_ownership_type <- as.factor(numeric_data$hospital_ownership_type)
 
 numeric_tr2 <- numeric_data
 numeric_te2 <- numeric_data
 numeric_te_whole2 <- numeric_te2
 
-rec2 <- numeric_te2 %>% recipe(net_patient_revenue_hundred_thousand ~ bed_size +
+rec2 <- numeric_te2 %>% recipe(difference_in_discharges ~ hospital_ownership_type + 
+                                 bed_size + 
+                                 net_patient_revenue_hundred_thousand +
                                             net_charity_care_cost_hundred_thousand +
                                             difference_in_discharges + 
                                             inpatient_occupancy + 
@@ -468,7 +472,7 @@ norm_trans <- rec2 %>%
                  population_y)
 
 ratio_recipe3 <- norm_trans %>%
-  step_impute_knn(all_numeric_predictors(),
+  step_impute_knn(all_predictors(),
                   neighbors = 5)
 
 ratio_rec4 <- prep(ratio_recipe3, training = numeric_tr2) 
@@ -481,7 +485,10 @@ summary(imputed2)
 #Most missing values reduced to 24 with the exception of net patient revenue which
 #reduced to 33
 
-name_change <- imputed2 %>% mutate(bed_size_imputed = bed_size) %>%
+name_change <- imputed2 %>% 
+  mutate(difference_in_discharges_imputed = difference_in_discharges) %>%
+  mutate(hospital_ownership_type_imputed = hospital_ownership_type) %>%
+  mutate(bed_size_imputed = bed_size) %>%
   mutate(difference_in_discharges_imputed = difference_in_discharges) %>% mutate(net_charity_care_cost_hundred_thousand_imputed = net_charity_care_cost_hundred_thousand) %>% mutate(net_patient_revenue_hundred_thousand_imputed = net_patient_revenue_hundred_thousand) %>%
   mutate(medicaid_payer_mix_numeric_imputed = medicaid_payer_mix_numeric) %>%
   mutate(medicare_payer_mix_imputed = medicare_payer_mix) %>%
@@ -518,7 +525,7 @@ removed_omits <- full_imputed2 %>%
                    difference_in_discharges_imputed,
                    net_charity_care_cost_hundred_thousand_imputed,
                    net_patient_revenue_hundred_thousand_imputed,
-                   hospital_ownership_type,
+                   hospital_ownership_type_imputed,
          year,
          hospital_name.y,
          medicaid_payer_mix_numeric_imputed,
@@ -562,7 +569,7 @@ curious2 <- knn_numerics %>%
 
 imp_graph <- removed_omits %>%
   ggplot(mapping = aes(y = difference_in_discharges_imputed,
-                       x = hospital_ownership_type)) +
+                       x = hospital_ownership_type_imputed)) +
   geom_point(alpha = 0.4, shape = 16, color = "skyblue") + 
   theme_minimal() + labs(title = "Graph using imputed data",
                          y = "Difference in Discharges Imputed",
@@ -728,7 +735,7 @@ Complete_imputed_table <- stargazer(test,
           test3, 
           test4,
           test5,
-          type = "html",
+          type = "text",
           title = "KNN Imputed Regression Models", 
                                                report = "vcs*",
                                                single.row = TRUE,
@@ -763,7 +770,7 @@ Complete_imputed_table <- stargazer(test,
           notes = "No Weighting Required or Used.",
           add.lines = list(c('Fixed Effects', 'No',
                              'No', 'No', 'Yes', 'Yes')),
-          out = "KNN_Imputed_Regressions_March.htm")
+          out = "KNN_Imputed_Regressions_March.txt")
 ```
 
 Maybe do an f test between medicaid and charity care costs. 
