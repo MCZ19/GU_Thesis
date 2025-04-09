@@ -736,7 +736,7 @@ Complete_imputed_table <- stargazer(test,
           test3, 
           test4,
           test5,
-          type = "text",
+          type = "html",
           title = "KNN Imputed Regression Models", 
                                                report = "vcs*",
                                                single.row = TRUE,
@@ -771,7 +771,7 @@ Complete_imputed_table <- stargazer(test,
           notes = "No Weighting Required or Used.",
           add.lines = list(c('Fixed Effects', 'No',
                              'No', 'No', 'Yes', 'Yes')),
-          out = "KNN_Imputed_Regressions_March.txt")
+          out = "KNN_Imputed_Regressions_April.htm")
 ```
 
 Maybe do an f test between medicaid and charity care costs. 
