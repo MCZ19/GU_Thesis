@@ -163,104 +163,6 @@ Percent of missing observations.
 -Direct Patient Care Labor Cost is .1272 or 267 obs. 
 
 
-## GT Table for Numeric Data
-```{r}
-num_for_gt <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
-                                            bed_size,
-                                            net_charity_care_cost_hundred_thousand,
-                                            difference_in_discharges, 
-                                            inpatient_occupancy, 
-                                            medicare_payer_mix,
-                                            hospital_operating_labor_cost_hundred_thousand,
-                                        medicaid_payer_mix_numeric,
-              direct_patient_care_labor_hours_numeric,
-              percent_children_in_poverty,
-              percent_unemployed,
-              percent_smokers,
-              percent_excessive_drinking,
-              percent_obese,
-              percent_uninsured,
-              percent_female,
-              percent_65_and_over,
-              percent_not_proficient_in_english,
-              percent_hispanic,
-              percent_african_american,
-              household_income,
-              mentally_unhealthy_days,
-              population_y,
-              percent_rural,
-              `Non-Profit`) %>%
-  na.omit()
-
-data_for_gt <- num_for_gt %>% summarise(across(c(net_patient_revenue_hundred_thousand:percent_rural),
-                                list(min = min, max = max, var = var, mean = mean, median = median, sd = sd),
-                                .names = "{.col}.{.fn}"))
-
-transposed <- t(data_for_gt)
-
-
-
-
-desc_stats <- num_for_gt %>%
-  tbl_summary(statistic = all_continuous() ~ "Min: {min} - Max: ({max}) -
-              Var: {var} - Mean: ({mean}) - Median: {median} - Sd: ({sd})"
-              ,
-digits = all_continuous() ~ 2,
-label = list(net_patient_revenue_hundred_thousand ~ "Net Patient Revenue in Hundreds of Thousands of Dollars",
-             bed_size ~ "Number of Hospital Beds",
-net_charity_care_cost_hundred_thousand ~ "Net Charity Care Costs in Hundreds of Thousands of Dollars",
-difference_in_discharges ~ "Expected vs. Observed PPCs",
-inpatient_occupancy ~ "Percent of Occupied Hospital Beds",
-medicare_payer_mix ~ "Medicare Payer Mix",
-hospital_operating_labor_cost_hundred_thousand ~ "Hospital Operating Labor Cost",
-medicaid_payer_mix_numeric ~ "Medicaid Payer Mix",
-direct_patient_care_labor_hours_numeric ~ "Direct Patient Care Hours",
-percent_children_in_poverty ~ "Percent of Children in Poverty in the County",
-percent_unemployed ~ "Percent of Unemployed in the County",
-percent_smokers ~ "Percent of Smokers in the County",
-percent_excessive_drinking ~ "Percent of Excessive Drinkers in the County",
-percent_obese ~ "Percent of Obesity in the County",
-percent_uninsured ~ "Percent Uninsured in the County",
-percent_female ~ "Percent Women in the County",
-percent_65_and_over ~ "Percent of Population over 65 in the County",
-percent_not_proficient_in_english ~ "Percent non-English Speakers in the County",
-percent_hispanic ~ "Percent of Population that is Hispanic",
-percent_african_american ~ "Percent of Population that is African American",
-household_income ~ "Average Household Income by County",
-mentally_unhealthy_days ~ "Mentally Unhealthy Days",
-population_y ~ "Total County Population",
-percent_rural ~ "Percent of County Considered Rural",
-`Non-Profit` ~ "Dummy Variable between Non-Profit and Government Hospitals")) %>%
-  add_n() %>%
-  modify_header(label ~ "**Variable**",
-                stat_0 ~ "**Statistics**") %>%
-  modify_spanning_header(~ "**Descriptive Statistics**") %>%
-  as_gt() %>% gt::gtsave("Descriptive_Stats01.png")
-
-
-
-show_header_names(desc_stats)
-
-
-
-
-
-
-
-
-large_gt <- data_for_gt %>%
-  gt()
-  
-  
-  
-  gt() %>%
-  tab_spanner(label = "Percentages",
-              columns = c("inpatient_occupancy", "medicare_payer_mix",
-                          "capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services",
-                          "medicare_operating_profit_margin", "payer_mix_adjusted_profit_loss_medicare",
-                          "medicaid_payer_mix_numeric"))
-```
-
 
 ## Creating new data frame only on what I'm evaluating
 ```{r}
@@ -633,6 +535,105 @@ var.test(removed_omits$direct_patient_care_labor_hours_numeric_imputed,
 
 ```
 Consider looking at Bartlett.test for bed/occupancy/labor variances. 
+
+
+## GT Table for Numeric Data
+```{r}
+num_for_gt <- removed_omits %>% select(net_patient_revenue_hundred_thousand_imputed,
+                                            bed_size_imputed,
+                                            net_charity_care_cost_hundred_thousand_imputed,
+                                            difference_in_discharges_imputed, 
+                                            hospital_ownership_type_imputed,
+                                            inpatient_occupancy_imputed, 
+                                            medicare_payer_mix_imputed,
+                                            medicaid_payer_mix_numeric_imputed,
+              direct_patient_care_labor_hours_numeric_imputed,
+              percent_children_in_poverty_imputed,
+              percent_unemployed_imputed,
+              percent_smokers_imputed,
+              percent_excessive_drinking_imputed,
+              percent_obese_imputed,
+              percent_uninsured_imputed,
+              percent_female_imputed,
+              percent_65_and_over_imputed,
+              percent_not_proficient_in_english_imputed,
+              percent_hispanic_imputed,
+              percent_african_american_imputed,
+              household_income_imputed,
+              mentally_unhealthy_days_imputed,
+              population_y_imputed,
+              percent_rural_imputed,
+              `Non-Profit`) %>%
+  na.omit()
+
+data_for_gt <- num_for_gt %>% summarise(across(c(net_patient_revenue_hundred_thousand:percent_rural),
+                                list(min = min, max = max, var = var, mean = mean, median = median, sd = sd),
+                                .names = "{.col}.{.fn}"))
+
+transposed <- t(data_for_gt)
+
+
+
+
+desc_stats <- num_for_gt %>%
+  tbl_summary(statistic = all_continuous() ~ "Min: {min} - Max: ({max}) -
+              Var: {var} - Mean: ({mean}) - Median: {median} - Sd: ({sd})"
+              ,
+digits = all_continuous() ~ 2,
+label = list(net_patient_revenue_hundred_thousand_imputed ~ "Net Patient Revenue in Hundreds of Thousands of Dollars",
+             bed_size_imputed ~ "Number of Hospital Beds",
+net_charity_care_cost_hundred_thousand_imputed ~ "Net Charity Care Costs in Hundreds of Thousands of Dollars",
+difference_in_discharges_imputed ~ "Expected vs. Observed PPCs",
+hospital_ownership_type_imputed ~ "Imputed Hospital Ownership Type",
+inpatient_occupancy_imputed ~ "Percent of Occupied Hospital Beds",
+medicare_payer_mix_imputed ~ "Medicare Payer Mix",
+medicaid_payer_mix_numeric_imputed ~ "Medicaid Payer Mix",
+direct_patient_care_labor_hours_numeric_imputed ~ "Direct Patient Care Hours",
+percent_children_in_poverty_imputed ~ "Percent of Children in Poverty in the County",
+percent_unemployed_imputed ~ "Percent of Unemployed in the County",
+percent_smokers_imputed ~ "Percent of Smokers in the County",
+percent_excessive_drinking_imputed ~ "Percent of Excessive Drinkers in the County",
+percent_obese_imputed ~ "Percent of Obesity in the County",
+percent_uninsured_imputed ~ "Percent Uninsured in the County",
+percent_female_imputed ~ "Percent Women in the County",
+percent_65_and_over_imputed ~ "Percent of Population over 65 in the County",
+percent_not_proficient_in_english_imputed ~ "Percent non-English Speakers in the County",
+percent_hispanic_imputed ~ "Percent of Population that is Hispanic",
+percent_african_american_imputed ~ "Percent of Population that is African American",
+household_income_imputed ~ "Average Household Income by County",
+mentally_unhealthy_days_imputed ~ "Mentally Unhealthy Days",
+population_y_imputed ~ "Total County Population",
+percent_rural_imputed ~ "Percent of County Considered Rural",
+`Non-Profit` ~ "Dummy Variable between Non-Profit and Government Hospitals")) %>%
+  add_n() %>%
+  modify_header(label ~ "**Variable**",
+                stat_0 ~ "**Statistics**") %>%
+  modify_spanning_header(~ "**Descriptive Statistics**") %>%
+  as_gt() %>% gt::gtsave("Descriptive_Stats99.png")
+
+
+
+show_header_names(desc_stats)
+
+
+
+
+
+
+
+
+large_gt <- data_for_gt %>%
+  gt()
+  
+  
+  
+  gt() %>%
+  tab_spanner(label = "Percentages",
+              columns = c("inpatient_occupancy", "medicare_payer_mix",
+                          "capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services",
+                          "medicare_operating_profit_margin", "payer_mix_adjusted_profit_loss_medicare",
+                          "medicaid_payer_mix_numeric"))
+```
 
 ## Imputed Regression Results
 
