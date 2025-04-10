@@ -208,7 +208,7 @@ knn_numerics <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
 ## Using Grid Search 
 ```{r}
 
-set.seed(04092026)
+set.seed(04092027)
 
 data_split <- initial_split(data = knn_numerics,
                             prop = .80)
@@ -219,18 +219,39 @@ data_test <- testing(x = data_split)
 
 k_recipe <- recipe(formula = difference_in_discharges ~ .,
                    data = data_train) %>%
-  step_normalize(net_patient_revenue_hundred_thousand,
-                 net_charity_care_cost_hundred_thousand,
+  step_normalize(bed_size,
+                   difference_in_discharges,
+                   net_charity_care_cost_hundred_thousand,
+                   net_patient_revenue_hundred_thousand,
+                   medicaid_payer_mix_numeric,
+         medicare_payer_mix,
+         inpatient_occupancy,
+              direct_patient_care_labor_hours_numeric,
+              direct_patient_care_labor_cost,
+         percent_children_in_poverty,
+         percent_unemployed,
+         percent_smokers,
+         percent_excessive_drinking,
+         percent_obese,
+         percent_uninsured,
+         percent_female,
+         percent_65_and_over,
+         percent_not_proficient_in_english,
+         percent_hispanic,
+         percent_african_american,
+         household_income,
+         mentally_unhealthy_days,
+         population_y,
+         percent_rural,
+         `Non-Profit`,
                  operating_expenses,
                  fund_balance,
                  hospital_expenses_inclusive_of_all_services,
                  capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services,
                  overhead_labor_cost,
                  commercial_hospital_operating_profit_loss,
-                 direct_patient_care_labor_cost,
                  hospital_operating_labor_cost_hundred_thousand,
                  direct_patient_care_labor_hours_numeric,
-                 household_income,
                  population_y)
 
 k_folds <- vfold_cv(data = data_train,
@@ -272,7 +293,7 @@ k_graph_stderr <- collected_metrics %>%
                        y = std_err)) + 
   geom_line() +
   geom_point() +
-    geom_vline(xintercept = 9, 
+    geom_vline(xintercept = 5, 
              linetype = 2) +
   labs(title = "Evaluating KNN Based on Standard Error") +
   xlab("Number of Neighbors") +
@@ -284,7 +305,7 @@ k_graph_mean <- collected_metrics %>%
                        y = mean)) + 
   geom_line() +
   geom_point() +
-  geom_vline(xintercept = 5, 
+  geom_vline(xintercept = 3, 
              linetype = 2) +
   labs(title = "Evaluating KNN based on Mean") +
   xlab("Number of Neighbors") +
@@ -359,7 +380,13 @@ rec2 <- numeric_te2 %>% recipe(difference_in_discharges ~ hospital_ownership_typ
               `Non-Profit`)
 
 norm_trans <- rec2 %>%
-  step_normalize(net_patient_revenue_hundred_thousand,
+  step_normalize(
+    
+    
+    
+    
+    
+    net_patient_revenue_hundred_thousand,
                  net_charity_care_cost_hundred_thousand,
                  operating_expenses,
                  fund_balance,
@@ -375,7 +402,7 @@ norm_trans <- rec2 %>%
 
 ratio_recipe3 <- norm_trans %>%
   step_impute_knn(all_predictors(),
-                  neighbors = 5)
+                  neighbors = 3)
 
 ratio_rec4 <- prep(ratio_recipe3, training = numeric_tr2) 
 
@@ -609,7 +636,7 @@ percent_rural_imputed ~ "Percent of County Considered Rural",
   modify_header(label ~ "**Variable**",
                 stat_0 ~ "**Statistics**") %>%
   modify_spanning_header(~ "**Descriptive Statistics**") %>%
-  as_gt() %>% gt::gtsave("Descriptive_Stats99.png")
+  as_gt() %>% gt::gtsave("Descriptive_Stats25.png")
 
 
 
@@ -736,7 +763,7 @@ Complete_imputed_table <- stargazer(test,
           test3, 
           test4,
           test5,
-          type = "html",
+          type = "text",
           title = "KNN Imputed Regression Models", 
                                                report = "vcs*",
                                                single.row = TRUE,
@@ -771,7 +798,7 @@ Complete_imputed_table <- stargazer(test,
           notes = "No Weighting Required or Used.",
           add.lines = list(c('Fixed Effects', 'No',
                              'No', 'No', 'Yes', 'Yes')),
-          out = "KNN_Imputed_Regressions_April.htm")
+          out = "KNN_Imputed_Regressions_April3.txt")
 ```
 
 Maybe do an f test between medicaid and charity care costs. 
