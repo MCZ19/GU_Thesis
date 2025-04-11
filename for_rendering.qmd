@@ -398,7 +398,9 @@ norm_trans <- rec2 %>%
                  hospital_operating_labor_cost_hundred_thousand,
                  direct_patient_care_labor_hours_numeric,
                  household_income,
-                 population_y)
+                 population_y,
+    bed_size,
+    difference_in_discharges)
 
 ratio_recipe3 <- norm_trans %>%
   step_impute_knn(all_predictors(),
@@ -636,7 +638,7 @@ percent_rural_imputed ~ "Percent of County Considered Rural",
   modify_header(label ~ "**Variable**",
                 stat_0 ~ "**Statistics**") %>%
   modify_spanning_header(~ "**Descriptive Statistics**") %>%
-  as_gt() %>% gt::gtsave("Descriptive_Stats25.png")
+  as_gt() %>% gt::gtsave("Descriptive_Stats30.png")
 
 
 
