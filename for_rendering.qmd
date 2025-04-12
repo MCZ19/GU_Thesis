@@ -380,28 +380,16 @@ rec2 <- numeric_te2 %>% recipe(difference_in_discharges ~ hospital_ownership_typ
               `Non-Profit`)
 
 norm_trans <- rec2 %>%
-  step_normalize(
-    
-    
-    
-    
-    
-    net_patient_revenue_hundred_thousand,
-                 net_charity_care_cost_hundred_thousand,
-                 operating_expenses,
+  step_normalize(operating_expenses,
                  fund_balance,
-                 hospital_expenses_inclusive_of_all_services,
+                hospital_expenses_inclusive_of_all_services,
                  capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services,
                  overhead_labor_cost,
                  commercial_hospital_operating_profit_loss,
-                 direct_patient_care_labor_cost,
-                 hospital_operating_labor_cost_hundred_thousand,
-                 direct_patient_care_labor_hours_numeric,
-                 household_income,
-                 population_y,
-    bed_size,
-    difference_in_discharges)
-
+                 hospital_operating_labor_cost_hundred_thousand
+                 )
+    
+   
 ratio_recipe3 <- norm_trans %>%
   step_impute_knn(all_predictors(),
                   neighbors = 3)
@@ -638,7 +626,7 @@ percent_rural_imputed ~ "Percent of County Considered Rural",
   modify_header(label ~ "**Variable**",
                 stat_0 ~ "**Statistics**") %>%
   modify_spanning_header(~ "**Descriptive Statistics**") %>%
-  as_gt() %>% gt::gtsave("Descriptive_Stats30.png")
+  as_gt() %>% gt::gtsave("Descriptive_Stats47.png")
 
 
 
