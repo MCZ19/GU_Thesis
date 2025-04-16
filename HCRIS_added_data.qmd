@@ -80,7 +80,8 @@ gt_viz_tbl <- for_viz %>%
   tab_spanner(label = "Time",
               columns = Year)
 
-gt_viz_tbl
+gt_viz_tbl %>%
+  gtsave(filename = "Hospitals2011to2022tbl.htm")
 
 ```
 
@@ -101,7 +102,7 @@ for_viz %>% ggplot(mapping = aes(x = `Hospital Ownership Type`, fill = Year, y =
 ## Grouped line chart.
 
 ```{r}
-for_viz %>%
+numberhospitalsgraph <- for_viz %>%
   ggplot(mapping = aes(x = Year, group = `Hospital Ownership Type`, y = n, color = `Hospital Ownership Type`)) +
   geom_line() +
   scale_y_continuous(breaks = seq(0, 175, by = 25)) +
@@ -111,6 +112,8 @@ for_viz %>%
   xlab("Year") +
   ylab("Number of Hospitals") +
   theme_minimal()
+
+ggsave("numberhospitalsgraph.png")
 
 ```
 
@@ -233,6 +236,18 @@ Write fully combined data set to excel as a backup and for my advisor.
 ```{r}
 write.xlsx(Fully_combined, 'Fully_combined_dataset_init.xlsx')
 ```
+
+## Correlogram
+
+```{r}
+
+Fully_combined_dataset %>%
+  ggplot(mapping = aes(x = year, group = hospital_ownership_type, color = hospital_ownership_type)) +
+  geom_bar() +
+  theme_minimal()
+```
+
+
 Renamed this to init after it originally ended in _dataset. 
 
 ## Add Cross Sectional County Data

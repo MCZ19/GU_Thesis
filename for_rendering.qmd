@@ -307,7 +307,7 @@ k_graph_mean <- collected_metrics %>%
   geom_point() +
   geom_vline(xintercept = 3, 
              linetype = 2) +
-  labs(title = "Evaluating KNN based on Mean") +
+  labs(title = "Evaluating KNN Based on Mean") +
   xlab("Number of Neighbors") +
   ylab("Mean") +
     theme_minimal()
@@ -380,13 +380,16 @@ rec2 <- numeric_te2 %>% recipe(difference_in_discharges ~ hospital_ownership_typ
               `Non-Profit`)
 
 norm_trans <- rec2 %>%
-  step_normalize(operating_expenses,
+  step_normalize(
+                 operating_expenses,
                  fund_balance,
-                hospital_expenses_inclusive_of_all_services,
+                 hospital_expenses_inclusive_of_all_services,
                  capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services,
                  overhead_labor_cost,
                  commercial_hospital_operating_profit_loss,
-                 hospital_operating_labor_cost_hundred_thousand
+                 hospital_operating_labor_cost_hundred_thousand,
+                 direct_patient_care_labor_hours_numeric,
+                 population_y
                  )
     
    
@@ -617,7 +620,7 @@ percent_65_and_over_imputed ~ "Percent of Population over 65 in the County",
 percent_not_proficient_in_english_imputed ~ "Percent non-English Speakers in the County",
 percent_hispanic_imputed ~ "Percent of Population that is Hispanic",
 percent_african_american_imputed ~ "Percent of Population that is African American",
-household_income_imputed ~ "Average Household Income by County",
+household_income_imputed ~ "Median Household Income by County",
 mentally_unhealthy_days_imputed ~ "Mentally Unhealthy Days",
 population_y_imputed ~ "Total County Population",
 percent_rural_imputed ~ "Percent of County Considered Rural",
@@ -753,7 +756,7 @@ Complete_imputed_table <- stargazer(test,
           test3, 
           test4,
           test5,
-          type = "text",
+          type = "html",
           title = "KNN Imputed Regression Models", 
                                                report = "vcs*",
                                                single.row = TRUE,
@@ -777,7 +780,7 @@ Complete_imputed_table <- stargazer(test,
                                                                     "Percent non-English Proficient",
                                                                     "Percent Hispanic",
                                                                     "Percent African American",
-                                                                    "Avg. Household Income",
+                                                                    "Median Household Income",
                                                                     "Avg. Mentally Unhealthy Days per Month",
                                                                     "Total Population by County",
                                                                     "Percent Rural"), 
@@ -788,7 +791,7 @@ Complete_imputed_table <- stargazer(test,
           notes = "No Weighting Required or Used.",
           add.lines = list(c('Fixed Effects', 'No',
                              'No', 'No', 'Yes', 'Yes')),
-          out = "KNN_Imputed_Regressions_April3.txt")
+          out = "KNN_Imputed_Regressions_April11.htm")
 ```
 
 Maybe do an f test between medicaid and charity care costs. 
@@ -1064,8 +1067,8 @@ ggplot(data = Fully_combined_dataset,
                      group = hospital_ownership_type, 
                      fill = hospital_ownership_type)) + 
   geom_density(alpha =0.6) + 
-  labs(title = "Distribution of PPCs in Terms of Hospital Ownership") +
-  xlab("Expected vs. Observed PPCs") +
+  labs(title = "Distribution of Observed vs. Expected Major PPCs in Terms of Hospital Ownership") +
+  xlab("Observed vs. Expected Major PPCs") +
   ylab("Density") +
   guides(fill = guide_legend(title = "Hospital Ownership Type")) +
   theme_minimal()
