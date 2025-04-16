@@ -79,76 +79,6 @@ numeric_data <- tibble(numeric_data,
 
 Create dataset with different variable classes and rescaled for certain variables. Dropped for-profit hospitals. 
 
-## Visualize dependant/independant relationship by year
-
-```{r}
-numeric_data %>%
-  ggplot(mapping = aes(y = difference_in_discharges,
-                       x = hospital_ownership_type)) +
-  geom_point() + 
-  facet_wrap(vars(year))
-```
-
-
-
-## Understanding data missingness
-
-```{r}
-#control variables 
-sum(is.na(numeric_data$bed_size))
-mean(is.na(numeric_data$bed_size))
-
-sum(is.na(numeric_data$net_charity_care_cost_hundred_thousand))
-mean(is.na(numeric_data$net_charity_care_cost_hundred_thousand))
-
-sum(is.na(numeric_data$net_patient_revenue_hundred_thousand))
-mean(is.na(numeric_data$net_patient_revenue_hundred_thousand))
-
-sum(is.na(numeric_data$medicaid_payer_mix_numeric))
-mean(is.na(numeric_data$medicaid_payer_mix_numeric))
-
-sum(is.na(numeric_data$medicare_payer_mix))
-mean(is.na(numeric_data$medicare_payer_mix))
-
-sum(is.na(numeric_data$inpatient_occupancy))
-mean(is.na(numeric_data$inpatient_occupancy))
-
-sum(is.na(numeric_data$direct_patient_care_labor_hours_numeric))
-mean(is.na(numeric_data$direct_patient_care_labor_hours_numeric))
-
-sum(is.na(numeric_data$direct_patient_care_labor_cost))
-mean(is.na(numeric_data$direct_patient_care_labor_cost))
-
-#key dependent variable
-sum(is.na(numeric_data$difference_in_discharges))
-mean(is.na(numeric_data$difference_in_discharges))
-
-#key independent variable.
-sum(is.na(numeric_data$hospital_ownership_type))
-mean(is.na(numeric_data$hospital_ownership_type))
-
-
-#Look at a table with just the variables I am interested in.
-View(numeric_data %>% group_by(hospital_name.y) %>% 
-       select(year, 
-              bed_size, 
-              net_charity_care_cost_ten_thousand,
-                       net_patient_revenue_hundred_thousand,
-              difference_in_discharges,
-              hospital_ownership_type, 
-              hospital_name.y, 
-              medicaid_payer_mix_numeric,
-              medicare_payer_mix,
-              inpatient_occupancy,
-              direct_patient_care_labor_hours_numeric,
-              direct_patient_care_labor_cost))
-
-# try using across function 
-
-
-
-
-```
 
 
 ## Creating new data frame only on what I'm evaluating
@@ -190,7 +120,6 @@ knn_numerics <- numeric_data %>% select(net_patient_revenue_hundred_thousand,
               `Non-Profit`) %>% 
   na.omit()
 ```
-
 
 ## Using Grid Search 
 ```{r}
@@ -320,9 +249,7 @@ gt_knn_show_best <- knn_show_best %>%
 
 ```
 
-
 ## Data Imputation
-
 ```{r}
 numeric_data$hospital_ownership_type <- as.factor(numeric_data$hospital_ownership_type)
 
@@ -513,36 +440,6 @@ imp_graph_2 + ori_graph_2
 
 ```
 
-Ideally would do all numeric predictors but that was taking forever. 
-
-medicaid_payer_mix is classified as a factor as is adjusted patient discharges and direct patient care fte per 1000 adjusted discharges.
-
-
-## F-tests between certain variables
-```{r}
-
-var.test(removed_omits$bed_size_imputed, 
-          removed_omits$inpatient_occupancy_imputed, 
-          alternative = "two.sided")
-#p value is 2.2e-16. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
-
-var.test(removed_omits$net_charity_care_cost_hundred_thousand_imputed,
-         removed_omits$medicaid_payer_mix_numeric_imputed)
-#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
-var.test(removed_omits$bed_size_imputed,
-         removed_omits$direct_patient_care_labor_hours_numeric_imputed)
-#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
-var.test(removed_omits$direct_patient_care_labor_hours_numeric_imputed,
-         removed_omits$inpatient_occupancy_imputed)
-#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
-var.test(removed_omits$direct_patient_care_labor_hours_numeric_imputed,
-         removed_omits$direct_patient_care_labor_cost_imputed)
-#p value is .989. As the p-value is more than .05 we do not reject the null hypothesis that the populations are equal. 
-
-```
-Consider looking at Bartlett.test for bed/occupancy/labor variances. 
-
-
 ## GT Table for Numeric Data
 ```{r}
 num_for_gt <- removed_omits %>% select(net_patient_revenue_hundred_thousand_imputed,
@@ -611,7 +508,6 @@ percent_rural_imputed ~ "Percent of County Considered Rural",
 ```
 
 ## Imputed Regression Results
-
 ```{r}
 test <- lm(difference_in_discharges_imputed ~ removed_omits$`Non-Profit_imputed`, data = removed_omits)
 
@@ -749,9 +645,7 @@ Complete_imputed_table <- stargazer(test,
           out = "KNN_Imputed_Regressions_April11.htm")
 ```
 
-
 ## Density plot
-
 ```{r}
 ggplot(data = Fully_combined_dataset,
        mapping = aes(x = difference_in_discharges,
@@ -783,14 +677,14 @@ correlogram <- removed_omits %>%
   mutate(`Black` = percent_african_american_imputed) %>%
   mutate(`Rural` = percent_rural_imputed) %>%
   mutate(`net revenue` = net_patient_revenue_hundred_thousand_imputed) %>%
-  mutate(`Charity Care Cost` = net_charity_care_cost_ten_thousand_imputed) %>%
+  mutate(`Charity Care Cost` = net_charity_care_cost_hundred_thousand_imputed) %>%
   mutate(population = population_y_imputed) %>%
   mutate(`Beds Occupied` = bed_size_imputed)  %>%
   mutate(household_income = household_income_imputed) %>%
   mutate(`Observed vs. Expected PPCs` = difference_in_discharges_imputed) %>%
   select(-year,
          -hospital_name.y,
-         -hospital_ownership_type,
+         -`Non-Profit_imputed`,
          -percent_smokers_imputed,
          -percent_children_in_poverty_imputed,
          -percent_unemployed_imputed,
@@ -803,7 +697,7 @@ correlogram <- removed_omits %>%
          -percent_hispanic_imputed,
          -percent_african_american_imputed,
          -percent_rural_imputed,
-         -net_charity_care_cost_ten_thousand_imputed,
+         -net_charity_care_cost_hundred_thousand_imputed,
          -net_patient_revenue_hundred_thousand_imputed,
          -population_y_imputed,
          -bed_size_imputed,
@@ -814,32 +708,95 @@ ggcorr(correlogram,
        label = TRUE,
        layout.exp = 3)
 
+```
+
+## Visualize dependant/independant relationship by year
+```{r}
+numeric_data %>%
+  ggplot(mapping = aes(y = difference_in_discharges,
+                       x = hospital_ownership_type)) +
+  geom_point() + 
+  facet_wrap(vars(year))
+```
+
+## Understanding data missingness
+```{r}
+#control variables 
+sum(is.na(numeric_data$bed_size))
+mean(is.na(numeric_data$bed_size))
+
+sum(is.na(numeric_data$net_charity_care_cost_hundred_thousand))
+mean(is.na(numeric_data$net_charity_care_cost_hundred_thousand))
+
+sum(is.na(numeric_data$net_patient_revenue_hundred_thousand))
+mean(is.na(numeric_data$net_patient_revenue_hundred_thousand))
+
+sum(is.na(numeric_data$medicaid_payer_mix_numeric))
+mean(is.na(numeric_data$medicaid_payer_mix_numeric))
+
+sum(is.na(numeric_data$medicare_payer_mix))
+mean(is.na(numeric_data$medicare_payer_mix))
+
+sum(is.na(numeric_data$inpatient_occupancy))
+mean(is.na(numeric_data$inpatient_occupancy))
+
+sum(is.na(numeric_data$direct_patient_care_labor_hours_numeric))
+mean(is.na(numeric_data$direct_patient_care_labor_hours_numeric))
+
+sum(is.na(numeric_data$direct_patient_care_labor_cost))
+mean(is.na(numeric_data$direct_patient_care_labor_cost))
+
+#key dependent variable
+sum(is.na(numeric_data$difference_in_discharges))
+mean(is.na(numeric_data$difference_in_discharges))
+
+#key independent variable.
+sum(is.na(numeric_data$hospital_ownership_type))
+mean(is.na(numeric_data$hospital_ownership_type))
 
 
+#Look at a table with just the variables I am interested in.
+View(numeric_data %>% group_by(hospital_name.y) %>% 
+       select(year, 
+              bed_size, 
+              net_charity_care_cost_ten_thousand,
+                       net_patient_revenue_hundred_thousand,
+              difference_in_discharges,
+              hospital_ownership_type, 
+              hospital_name.y, 
+              medicaid_payer_mix_numeric,
+              medicare_payer_mix,
+              inpatient_occupancy,
+              direct_patient_care_labor_hours_numeric,
+              direct_patient_care_labor_cost))
 
-("Non-Profit Hospitals", "Number of Beds",
-                                                                    "Net Patient Revenue (Hundreds of Thousands of Dollars)",
-                                                                    "Net Charity Care Costs (Tens of Thousands of Dollars",
-                                                                    "Medicare Payer Mix",
-                                                                    "Medicaid Payer Mix", 
-                                                                    "Percent of Beds Occupied",
-                                                                    "Total Number of Direct Care Hours per Hospital",
-                                                                    "Percent of Children in Poverty",
-                                                                    "Percent Unemployed",
-                                                                    "Percent Smokers",
-                                                                    "Percent Excessive Drinkers",
-                                                                    
-                                                                    "Percent Obese",
-                                                                    "Percent Uninsured",
-                                                                    "Percent Female",
-                                                                    "Percent 65 and Older",
-                                                                    "Percent non-English Proficient",
-                                                                    "Percent Hispanic",
-                                                                    "Percent African American",
-                                                                    "Avg. Household Income",
-                                                                    "Avg. Mentally Unhealthy Days",
-                                                                    "Total Population",
-                                                                    "Percent Rural")
+# try using across function 
+
+
 
 
 ```
+
+## F-tests between certain variables
+```{r}
+
+var.test(removed_omits$bed_size_imputed, 
+          removed_omits$inpatient_occupancy_imputed, 
+          alternative = "two.sided")
+#p value is 2.2e-16. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+
+var.test(removed_omits$net_charity_care_cost_hundred_thousand_imputed,
+         removed_omits$medicaid_payer_mix_numeric_imputed)
+#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+var.test(removed_omits$bed_size_imputed,
+         removed_omits$direct_patient_care_labor_hours_numeric_imputed)
+#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+var.test(removed_omits$direct_patient_care_labor_hours_numeric_imputed,
+         removed_omits$inpatient_occupancy_imputed)
+#p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
+var.test(removed_omits$direct_patient_care_labor_hours_numeric_imputed,
+         removed_omits$direct_patient_care_labor_cost_imputed)
+#p value is .989. As the p-value is more than .05 we do not reject the null hypothesis that the populations are equal. 
+
+```
+Consider looking at Bartlett.test for bed/occupancy/labor variances. 
