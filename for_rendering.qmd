@@ -98,8 +98,8 @@ numeric_data %>%
 sum(is.na(numeric_data$bed_size))
 mean(is.na(numeric_data$bed_size))
 
-sum(is.na(numeric_data$net_charity_care_cost_ten_thousand))
-mean(is.na(numeric_data$net_charity_care_cost_ten_thousand))
+sum(is.na(numeric_data$net_charity_care_cost_hundred_thousand))
+mean(is.na(numeric_data$net_charity_care_cost_hundred_thousand))
 
 sum(is.na(numeric_data$net_patient_revenue_hundred_thousand))
 mean(is.na(numeric_data$net_patient_revenue_hundred_thousand))
@@ -149,19 +149,6 @@ View(numeric_data %>% group_by(hospital_name.y) %>%
 
 
 ```
-
-Percent of missing observations.
--Difference in Discharges is .4259 or 895 obs.
--Hospital Ownership Type is .0048 or 10 obs. 
--Bed size is .0148 or 31 observations.
--Net Charity Care Cost is .0548 or 115 obs.
--Net Patient Revenue is .0157 or 33 obs.
--Medicaid Payer Mix is .0615 or 129 obs. 
--Medicare Payer Mix is .0143 or 30 obs. 
--Inpatient Occupancy is .0248 or 52 obs. 
--Direct Patient Care Labor Hours is .1286 or 270 obs. 
--Direct Patient Care Labor Cost is .1272 or 267 obs. 
-
 
 
 ## Creating new data frame only on what I'm evaluating
@@ -333,7 +320,6 @@ gt_knn_show_best <- knn_show_best %>%
 
 ```
 
-Sqrt of 1311 is about 36.21 for sqrt rule.
 
 ## Data Imputation
 
@@ -474,11 +460,11 @@ removed_omits <- full_imputed2 %>%
   na.omit()
 
 curious <- removed_omits %>% summarize(mean(difference_in_discharges_imputed))
-#Mean is -1.171
+#Mean is -3.681393
 
 curious2 <- knn_numerics %>%
   summarize(mean(difference_in_discharges))
-#Mean is -2.205
+#Mean is -2.551124
 
 #sum(is.nan(full_imputed2$difference_in_discharges_imputed))
 
@@ -540,7 +526,7 @@ var.test(removed_omits$bed_size_imputed,
           alternative = "two.sided")
 #p value is 2.2e-16. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
 
-var.test(removed_omits$net_charity_care_cost_ten_thousand_imputed,
+var.test(removed_omits$net_charity_care_cost_hundred_thousand_imputed,
          removed_omits$medicaid_payer_mix_numeric_imputed)
 #p value is 2.2e-16 also. As the p-value is less than .05 we reject the null hypothesis that the populations are equal. 
 var.test(removed_omits$bed_size_imputed,
@@ -586,19 +572,10 @@ num_for_gt <- removed_omits %>% select(net_patient_revenue_hundred_thousand_impu
               `Non-Profit`) %>%
   na.omit()
 
-data_for_gt <- num_for_gt %>% summarise(across(c(net_patient_revenue_hundred_thousand:percent_rural),
-                                list(min = min, max = max, var = var, mean = mean, median = median, sd = sd),
-                                .names = "{.col}.{.fn}"))
-
-transposed <- t(data_for_gt)
-
-
-
 
 desc_stats <- num_for_gt %>%
   tbl_summary(statistic = all_continuous() ~ "Min: {min} - Max: ({max}) -
-              Var: {var} - Mean: ({mean}) - Median: {median} - Sd: ({sd})"
-              ,
+              Var: {var} - Mean: ({mean}) - Median: {median} - Sd: ({sd})",
 digits = all_continuous() ~ 2,
 label = list(net_patient_revenue_hundred_thousand_imputed ~ "Net Patient Revenue in Hundreds of Thousands of Dollars",
              bed_size_imputed ~ "Number of Hospital Beds",
@@ -631,28 +608,6 @@ percent_rural_imputed ~ "Percent of County Considered Rural",
   modify_spanning_header(~ "**Descriptive Statistics**") %>%
   as_gt() %>% gt::gtsave("Descriptive_Stats47.png")
 
-
-
-show_header_names(desc_stats)
-
-
-
-
-
-
-
-
-large_gt <- data_for_gt %>%
-  gt()
-  
-  
-  
-  gt() %>%
-  tab_spanner(label = "Percentages",
-              columns = c("inpatient_occupancy", "medicare_payer_mix",
-                          "capital_related_costs_as_of_hospital_expenses_inclusive_of_all_services",
-                          "medicare_operating_profit_margin", "payer_mix_adjusted_profit_loss_medicare",
-                          "medicaid_payer_mix_numeric"))
 ```
 
 ## Imputed Regression Results
@@ -794,270 +749,6 @@ Complete_imputed_table <- stargazer(test,
           out = "KNN_Imputed_Regressions_April11.htm")
 ```
 
-Maybe do an f test between medicaid and charity care costs. 
-
-direct patient care labor hours f test with beds?
-
-inpatient occupancy
-
-## Dealing with Observation Irregularities 
-
-```{r}
-
-imputed <- numeric_data %>% filter(!hospital_name.y == "BURDETT CARE CENTER", 
-                                   !hospital_name.y == "ROCKEFFELLER UNIVERSITY HOSPITAL",
-                                   !hospital_name.y == "BURDETT CARE CENTER INC.",
-                                   !hospital_name.y == "BRUNSWICK HOSPITAL CENTER")
-```
-Rockerfeller and burdett are nas for all 3 controls. 
-
-net charity care is missing for Memorial Hospital for Cancer and All and Roswell Park Cancer Institute. Missing Soldiers and Sailors Memorial Hospital early values net charity. 
-
-Look at recipes package. Prep and bake recipe. step impute functions. 
-
-
-Remove Rockeffeller University Hospital and Burdett Care Center because they have NAs for all three of my controls. 
-Remove Brunswick Hospital Center because two controls have NAs. 
-Consider removing "MEMORIAL HOSPITAL FOR CANCER AND ALL" as net charity care no observations. 
-
-
-## Naive linear regression.
-
-```{r}
-
-initial_reg <- lm(difference_in_discharges ~ hospital_ownership_type, data = imputed)
-
-linear_summary <- summary(initial_reg)
-
-linear_glance <- glance(initial_reg)
-
-linear_tidy <- tidy(initial_reg)
-
-linear_coef <- coeftest(initial_reg, vcov = vcovHC, type = "HC1")
-
-table_initial_reg <- initial_reg %>% stargazer(type = "text",
-                                               title = "Simple Linear Regression Results",
-                                               report = "vcs*",
-                                               single.row = TRUE,
-                                               digits = 3,
-                                               omit.stat = c("f","ser","rsq"),
-                                               se_type = "HC1")
-
-#linear_table <- linear_tidy %>% gt()
-
-#linear_table_glance <- linear_glance %>% gt()
-
-#linear_viz <- ggplot(data = numeric_data, mapping = aes(x = year, y = ppc_version)) + geom_point()
-
-#linear_viz + plot_layout(linear_table + linear_table_glance) 
-```
-
-## Linear regression with controls.
-
-```{r}
-
-linear_control <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand, data = numeric_data)  
-
-summary(linear_control) 
-
-glance(linear_control)
-
-View(tidy(linear_control))
-
-coeftest(linear_control, vcov = vcovHC, type = "HC1")
-
-table_control_linear_reg <- linear_control %>% stargazer(type = "text",
-                                               title = "Linear Regression with Controls Results",
-                                               report = "vcs*",
-                                               single.row = TRUE,
-                                               digits = 3,
-                                               omit.stat = c("f","ser","rsq"),
-                                               se_type = "HC1")
-
-
-```
-
-## Hospital Fixed Effects
-
-```{r}
-
-#hospital_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand - 1,data = numeric_data)  
-
-hospital_fixed_effects_plm <- plm(difference_in_discharges ~ hospital_ownership_type + hospital_name.y + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
-    data = numeric_data,
-    index = c("hospital_name.y", "year"),
-    model = "within",
-    effect = "individual")
-
-summary(hospital_fixed_effects_plm) 
-
-glance(hospital_fixed_effects_plm)
-tidy(hospital_fixed_effects_plm)
-
-coeftest(hospital_fixed_effects_plm, vcov = vcovHC, type = "HC1")
-
-table_hospital_effects <- hospital_fixed_effects_plm %>% stargazer(type = "text",
-                                               title = "Hospital Fixed Effect Regression Results",
-                                               report = "vcs*",
-                                               single.row = TRUE,
-                                               digits = 3,
-                                               omit.stat = c("f","ser","rsq"),
-                                               se_type = "HC1")
-
-
-#numeric_data %>% count(hospital_name.y) %>% arrange(by = n) 
-
-#ask an economist. Could do entity wise demeaning. Do I have too many fixed effects for my dataset size?
-```
-
-## Time Fixed Effects
-
-```{r}
-#time_fixed_effects <- lm(difference_in_discharges ~ hospital_ownership_type + year + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand - 1,data = numeric_data)  
-
-time_fixed_effects_plm <- plm(difference_in_discharges ~ hospital_ownership_type + year + hospital_name.y + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
-                data = numeric_data,
-    index = c("hospital_name.y", "year"),
-    model = "within",
-    effect = "twoways")
-
-summary(time_fixed_effects_plm) 
-
-glance(time_fixed_effects_plm)
-
-coeftest(time_fixed_effects_plm, vcov = vcovHC, type = "HC1")
-
-table_time_effects <- time_fixed_effects_plm %>% stargazer(type = "text",
-                                               title = "Simple Linear Regression Results",
-                                               report = "vcs*",
-                                               single.row = TRUE,
-                                               digits = 3,
-                                               omit.stat = c("f","ser","rsq"),
-                                               se_type = "HC1")
-
-```
-
-## Simple two-way fixed effects regression.
-
-```{r}
-
-fixed_effects <- plm(difference_in_discharges ~ hospital_ownership_type,
-                     data = numeric_data,
-                     index = c("year","hospital_name.y"),
-                     model = "within",
-                     effect = "twoways")
-
-summary(fixed_effects)
-glance(fixed_effects)
-tidy(fixed_effects)
-coeftest(fixed_effects, vcov = vcovHC, type = "HC1")
-
-simple_twoway_fixed_effects <- fixed_effects %>% stargazer(type = "text",
-                                               title = "Simple Linear Regression Results",
-                                               report = "vcs*",
-                                               single.row = TRUE,
-                                               digits = 3,
-                                               omit.stat = c("f","ser","rsq"),
-                                               se_type = "HC1")
-
-```
-
-## Add control variables to fixed effects regression.
-
-```{r}
-Controls_added <- plm(difference_in_discharges ~ hospital_ownership_type + bed_size+ net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand,
-                     data = numeric_data,
-                     index = c("year","hospital_name.y"),
-                     model = "within",
-                     effect = "twoways")
-
-summary(Controls_added)
-glance(Controls_added)
-tidy(Controls_added)
-
-coeftest(Controls_added, vcov = vcovHC, type = "HC1")
-
-fixed_effects_control <- Controls_added %>%  stargazer(type = "text",
-                                               title = "Simple Linear Regression Results",
-                                               report = "vcs*",
-                                               single.row = TRUE,
-                                               digits = 3,
-                                               omit.stat = c("f","ser","rsq"),
-                                               se_type = "HC1")
-```
-
-## Stargazer Prep
-```{r}
-m1 <- initial_reg
-m2 <- linear_control
-m3 <- hospital_fixed_effects_plm
-m4 <- time_fixed_effects_plm
-```
-
-
-## Stargazer Combined Table
-
-```{r}
-
-Complete_init_table <- stargazer(m1,
-          m2, 
-          m3, 
-          m4,
-          type = "text",
-          title = "All Four Regression Models", 
-                                               report = "vcs*",
-                                               single.row = TRUE,
-                                               digits = 3,
-                                               covariate.labels = c("Governmental Hospitals", "Non-Profit Hospitals", "Number of Beds", "Net Patient Revenue (Hundreds of Thousands of Dollars)", "Net Charity Care Costs (Tens of Thousands of Dollars"),
-                                               column.labels = c("Simple Linear", "Linear with Controls", "Hospital Fixed Effects", "Two Way Fixed Effects"),
-                                               omit.stat = c("f","ser","rsq"),
-                                               se_type = "HC1",
-                                               dep.var.labels = "Observed vs. Expected PPCs")
-
-#summary(Compare_lm_table)
-
-Compare_single_effects_table <- stargazer(hospital_fixed_effects_plm,
-          time_fixed_effects_plm,
-          type = "html",
-          title = "Hospital Fixed Effects vs. Year Fixed Effects", 
-          report = "vcs*p",
-          single.row = TRUE,
-          ci = TRUE, 
-          ci.level = 0.95,
-          mean.sd = TRUE, 
-          p.auto = TRUE, 
-          digits = 3, 
-          se_type = "HC1",
-          out = "Compare_single_effects_table.htm")
-
-#summary(Compare_single_effects_table)
-
-Compare_twoway_effects_table <- stargazer(fixed_effects,
-          Controls_added,
-          type = "html",
-          title = "Simple Two Way Fixed Effects vs. Two Way Fixed Effects with Controls", 
-          report = "vcs*p",
-          single.row = TRUE,
-          ci = TRUE, 
-          ci.level = 0.95,
-          mean.sd = TRUE, 
-          p.auto = TRUE, 
-          digits = 3, 
-          se_type = "HC1",
-          out = "Compare_twoway_effects_table.htm")
-
-#summary(Compare_twoway_effects_table)
-
-
-```
-
-## Just looking at a scatterplot
-
-```{r}
-ggplot(data = Fully_combined_dataset,
-       mapping = aes(x = hospital_ownership_type, y = difference_in_discharges, fill = year)) + geom_point(alpha = .3) + theme_minimal()
-
-```
 
 ## Density plot
 
@@ -1152,102 +843,3 @@ ggcorr(correlogram,
 
 
 ```
-
-
-
--------------------
-From Williams
-
-\#' Create a regression table with clustered standard errors and drop the\
-\#' coefficients from fixed effects.\
-\#'\
-\#' \@param model1\
-\#' \@param model2\
-\#' \@param model3\
-\#' \@param model4\
-\#'\
-\#' \@return\
-\#'\
-create_model_table \<- function(model1, model2, model3, model4) {\
- \
-  drop_fe \<- function(x, fe = "state\|cz2000") {\
-   \
-    x\[!grepl(fe, names(x))\]\
-   \
-  }\
- \
-  se \<- starprep(model1,\
-                 model2,\
-                 model3,\
-                 model4,\
-                 se_type = "HC1") %\>%\
-    map(drop_fe)\
- \
-  model1\$coefficients \<- drop_fe(model1\$coefficients)\
-  model2\$coefficients \<- drop_fe(model2\$coefficients)\
-  model3\$coefficients \<- drop_fe(model3\$coefficients)\
-  model4\$coefficients \<- drop_fe(model4\$coefficients)\
- \
-  stargazer(model1,\
-            model2,\
-            model3,\
-            model4,\
-            se = se,\
-            type = "html",\
-            digits = 5)\
-}
-
-------------------------------------------------------------------------
-
-Direct patient care? -\>
-
-Along causal chain?
-
-Groft page 39 or 43. Mediator check on Direct Patient Care.
-
-Medicaid for patient income proxy. F test between them a charity care.
-
-I do have zip code. Could try to match to local info online. hospital referral region (HRR) data? Maybe check Dartmouth Atlas.
-
-------------------------------------------------------------------------
-
-library(tidyverse)\
-library(gt)\
-library(patchwork)\
-library(broom)\
-\
-model \<- lm(dist \~ speed, data = cars)\
-\
-\
-table_coef \<- model \|\>\
-tidy() \|\>\
-gt()\
-\
-table_model \<- model \|\>\
-  glance() \|\>\
-  gt()\
-\
-viz \<- ggplot(data = cars, aes(speed, dist)) +\
-  geom_point()
-
-------------------------------------------------------------------------
-
-<https://gt.rstudio.com/articles/case-study-gtcars.html>\
-<https://gt.rstudio.com/articles/case-study-clinical-tables.html>
-
-------------------------------------------------------------------------
-
-for hw testthat testcheck() add r script
-
-```{r}
-lark <- lm(difference_in_discharges ~ hospital_ownership_type + bed_size + net_patient_revenue_hundred_thousand + net_charity_care_cost_ten_thousand + hos_majteach + hos_highuc + hos_res,
-   data = numeric_data) 
-
-glance(lark)
-
-tidy(lark)
-
-summary(lark)
-```
-
-Use case when to make urban vs rural divide.
