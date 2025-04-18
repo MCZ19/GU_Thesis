@@ -5,4 +5,4 @@ Data from New York's SPARCS data set on hospital inpatient discharges, County He
 
 Additional data not used in thesis from AHRQ. 
 
-Look at the Quarto files uploaded as html files. 
+Look at the Quarto files uploaded as html files. For_rendering and 
