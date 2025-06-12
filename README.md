@@ -18,4 +18,6 @@ Data sets:
 5. HUD Zip Code Crosswalk: https://www.huduser.gov/portal/datasets/usps_crosswalk.html
 6. USGS Geographic Names Information System: https://www.usgs.gov/us-board-on-geographic-names/download-gnis-data
 
+Final paper: https://www.proquest.com/docview/3215569854?accountid=11091&parentSessionId=2qBL42oKytRUWAm48vQYH0P2hfEixgLIhjKP1rsLLyA%3D&sourcetype=Dissertations%20&%20Theses
+
 -Mitchell
